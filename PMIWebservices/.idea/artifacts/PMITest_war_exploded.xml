@@ -1,0 +1,23 @@
+<component name="ArtifactManager">
+  <artifact type="exploded-war" name="PMITest:war exploded">
+    <output-path>$PROJECT_DIR$/out/artifacts/PMITest_war_exploded</output-path>
+    <root id="root">
+      <element id="directory" name="WEB-INF">
+        <element id="directory" name="classes">
+          <element id="module-output" name="PMIWebservices" />
+        </element>
+        <element id="directory" name="lib">
+          <element id="file-copy" path="$USER_HOME$/Data/HFU/WissenschaftlicherMitarbeiter/Thesen/2017-03 IT Sicherheit Updates mit Zertifikaten/develop/libs/jscep-2.4.0.jar" />
+          <element id="file-copy" path="$USER_HOME$/Data/HFU/WissenschaftlicherMitarbeiter/Thesen/2017-03 IT Sicherheit Updates mit Zertifikaten/develop/libs/commons-io-2.5.jar" />
+          <element id="file-copy" path="$USER_HOME$/Data/HFU/WissenschaftlicherMitarbeiter/Thesen/2017-03 IT Sicherheit Updates mit Zertifikaten/develop/libs/slf4j-api-1.7.25.jar" />
+          <element id="file-copy" path="$USER_HOME$/Data/HFU/WissenschaftlicherMitarbeiter/Thesen/2017-03 IT Sicherheit Updates mit Zertifikaten/develop/libs/bcpkix-jdk15on-156.jar" />
+          <element id="file-copy" path="$USER_HOME$/Data/HFU/WissenschaftlicherMitarbeiter/Thesen/2017-03 IT Sicherheit Updates mit Zertifikaten/develop/libs/commons-codec-1.10.jar" />
+          <element id="file-copy" path="$USER_HOME$/Data/HFU/WissenschaftlicherMitarbeiter/Thesen/2017-03 IT Sicherheit Updates mit Zertifikaten/develop/libs/apache-commons-lang.jar" />
+          <element id="file-copy" path="$USER_HOME$/Data/HFU/WissenschaftlicherMitarbeiter/Thesen/2017-03 IT Sicherheit Updates mit Zertifikaten/develop/libs/slf4j-simple-1.7.25.jar" />
+          <element id="file-copy" path="$USER_HOME$/Data/HFU/WissenschaftlicherMitarbeiter/Thesen/2017-03 IT Sicherheit Updates mit Zertifikaten/develop/libs/bcprov-ext-jdk15on-156.jar" />
+        </element>
+      </element>
+      <element id="javaee-facet-resources" facet="PMIWebservices/web/Web" />
+    </root>
+  </artifact>
+</component>

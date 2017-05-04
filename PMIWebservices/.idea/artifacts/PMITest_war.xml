@@ -1,0 +1,8 @@
+<component name="ArtifactManager">
+  <artifact type="war" name="PMITest:war">
+    <output-path>$PROJECT_DIR$/out/artifacts/PMITest_war</output-path>
+    <root id="archive" name="PMITest_war.war">
+      <element id="artifact" artifact-name="PMITest:war exploded" />
+    </root>
+  </artifact>
+</component>
