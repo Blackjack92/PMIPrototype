@@ -13,6 +13,8 @@ public class MyApplication extends Application{
         HashSet h = new HashSet<Class<?>>();
         h.add( HelloWorld.class );
         h.add( CACertificates.class );
+        h.add( PKCService.class );
+        // h.add( PMIService.class );
         return h;
     }
 }

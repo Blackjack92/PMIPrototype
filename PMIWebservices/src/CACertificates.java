@@ -56,12 +56,12 @@ public class CACertificates {
     public String getPKCRequest(@PathParam("requestid") String username) {
         return "The username is: " + username;
     }
-
+/*
     @POST
     @Path("pkc")
-    @Produces(MediaType.TEXT_HTML)
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
-    public void createPKCRequest(@FormParam("name") String name, @Context HttpServletResponse servletResponse) throws IOException {
+    public void createPKCRequest(@FormParam("") String name, @Context HttpServletResponse servletResponse) throws IOException {
         servletResponse.sendRedirect("../certificates/pkcrequest/" + String.valueOf(Math.random()));
     }
+*/
 }

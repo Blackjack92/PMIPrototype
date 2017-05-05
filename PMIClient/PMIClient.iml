@@ -7,8 +7,8 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="library" name="httpclient-4.5.3" level="project" />
-    <orderEntry type="module-library">
+    <orderEntry type="library" exported="" name="httpclient-4.5.3" level="project" />
+    <orderEntry type="module-library" exported="">
       <library>
         <CLASSES>
           <root url="jar://$MODULE_DIR$/libs/httpcore-4.4.6.jar!/" />
@@ -17,10 +17,19 @@
         <SOURCES />
       </library>
     </orderEntry>
-    <orderEntry type="module-library">
+    <orderEntry type="module-library" exported="">
       <library>
         <CLASSES>
           <root url="jar://$MODULE_DIR$/libs/commons-logging-1.2.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/../PMIUtils/out/artifacts/PMIUtils_jar/PMIUtils.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
