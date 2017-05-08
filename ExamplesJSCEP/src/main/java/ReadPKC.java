@@ -11,13 +11,12 @@ import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
 import org.bouncycastle.pkcs.PKCS10CertificationRequest;
 import org.bouncycastle.pkcs.PKCS10CertificationRequestBuilder;
 import org.jscep.client.Client;
-import org.jscep.client.ClientException;
 import org.jscep.client.DefaultCallbackHandler;
 import org.jscep.client.EnrollmentResponse;
+import org.jscep.client.verification.CachingCertificateVerifier;
 import org.jscep.client.verification.CertificateVerifier;
 import org.jscep.client.verification.ConsoleCertificateVerifier;
 import org.jscep.client.verification.OptimisticCertificateVerifier;
-import org.jscep.transaction.TransactionException;
 import org.jscep.transport.response.Capabilities;
 
 import javax.security.auth.callback.CallbackHandler;
@@ -25,25 +24,35 @@ import javax.security.auth.x500.X500Principal;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.net.URL;
-import java.security.*;
-import java.security.cert.*;
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
+import java.security.PrivateKey;
+import java.security.PublicKey;
+import java.security.cert.CertStore;
+import java.security.cert.Certificate;
+import java.security.cert.X509Certificate;
 import java.util.Calendar;
+import java.util.Collection;
 import java.util.Date;
 
 /**
- * Created by kevin on 22.04.17.
+ * Class name: ${CLASS_NAME}
+ * Created by kevin on 06.05.17.
  */
-public class MainRequestCertificate {
+public class ReadPKC {
 
-    public static void main(String[] args) throws IOException, NoSuchAlgorithmException, OperatorCreationException, CertificateException, ClientException, TransactionException, CertStoreException, InterruptedException {
+    public static void main(String[] args) throws Exception {
 
+        System.out.println("PMI Facade start...");
         URL url = new URL("http://141.28.105.137/scep/scep");
-        // CertificateVerifier verifier = new ConsoleCertificateVerifier();
-        CallbackHandler handler = new DefaultCallbackHandler(new OptimisticCertificateVerifier());
+        // URL url = new URL("http://141.28.104.153/scep/scep");
+
+        CertificateVerifier consoleVerifier = new ConsoleCertificateVerifier();
+        CertificateVerifier verifier = new OptimisticCertificateVerifier(); // new CachingCertificateVerifier(consoleVerifier);
+        CallbackHandler handler = new DefaultCallbackHandler(verifier);
 
         Client client = new Client(url, handler);
 
-        // Client key pair
         KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA");
         keyPairGenerator.initialize(1024);
         KeyPair requesterKeyPair = keyPairGenerator.genKeyPair();
@@ -59,8 +68,6 @@ public class MainRequestCertificate {
         X500Principal requesterSubject = new X500Principal("CN=jscep.org, L=Cardiff, ST=Wales, C=UK"); // doesn't need to be the same as issuer
         PublicKey requesterPubKey = requesterKeyPair.getPublic(); // from generated key pair
         JcaX509v3CertificateBuilder certBuilder = new JcaX509v3CertificateBuilder(requesterIssuer, serial, notBefore, notAfter, requesterSubject, requesterPubKey);
-        // Optional extensions
-        // certBuilder.addExtension(X509Extension.keyUsage, false, new KeyUsage(KeyUsage.digitalSignature));
 
         // Get signature algorithm
         Capabilities caps = client.getCaCapabilities();
@@ -72,15 +79,18 @@ public class MainRequestCertificate {
         ContentSigner certSigner = certSignerBuilder.build(requesterPrivKey);
         X509CertificateHolder certHolder = certBuilder.build(certSigner);
 
-        // Certificate for requesting signing
+
+        // extract the JCA-compatible certificate
         JcaX509CertificateConverter converter = new JcaX509CertificateConverter();
         X509Certificate requesterCert = converter.getCertificate(certHolder);
 
+        //set password and cast it
         String password = "SecretChallenge";
         DERPrintableString cpSet = new DERPrintableString(new String(password));
         SubjectPublicKeyInfo pkInfo = SubjectPublicKeyInfo.getInstance(requesterPubKey.getEncoded());
 
-        JcaContentSignerBuilder signerBuilder = new JcaContentSignerBuilder("SHA1withRSA");
+        JcaContentSignerBuilder signerBuilder = new JcaContentSignerBuilder(
+                "SHA1withRSA");
         ContentSigner signer;
         try {
             signer = signerBuilder.build(requesterPrivKey);
@@ -90,31 +100,33 @@ public class MainRequestCertificate {
 
             throw ioe;
         }
-
-        PKCS10CertificationRequestBuilder builder = new PKCS10CertificationRequestBuilder(
-                X500Name.getInstance(requesterSubject.getEncoded()), pkInfo);
-        builder.addAttribute(PKCSObjectIdentifiers.pkcs_9_at_challengePassword,
-                cpSet);
+        //generate certificate signing request
+        PKCS10CertificationRequestBuilder builder = new PKCS10CertificationRequestBuilder(X500Name.getInstance(requesterSubject.getEncoded()),pkInfo);
+        //set Scep server password
+        builder.addAttribute(PKCSObjectIdentifiers.pkcs_9_at_challengePassword, cpSet);
 
         PKCS10CertificationRequest csr = builder.build(signer);
-
-        EnrollmentResponse response = client.enrol(requesterCert, requesterPrivKey, csr);
+        //Send the enrollment request
+        System.out.println("Zertifikat wird gesendet");
+        EnrollmentResponse response = client.enrol(requesterCert,requesterPrivKey,csr);
         System.out.println(response);
 
-        //X509Certificate test = (X509Certificate) response;
+        X500Principal entityprincipal = new X500Principal(requesterIssuer.getEncoded());
+        //Polling for a Pending Enrollment
+        response = client.poll(requesterCert,requesterKeyPair.getPrivate(),entityprincipal,response.getTransactionId());
+        //response = client.poll(requesterCert, requesterPrivKey, requesterSubject);
+        System.out.println("response wurde gesendet, 13 Sekunden Zeit um zu genehmigen");
+        // Thread.sleep(20000);
+        CertStore store = response.getCertStore();
+        Collection<? extends Certificate> certs = store.getCertificates(null);
+        java.security.cert.Certificate[] chain = new java.security.cert.Certificate[certs.size()];
 
-        // Thread.sleep(30000);
-
-        X500Principal entityPrincipal = new X500Principal(requesterIssuer.getEncoded());
-        response = client.poll(requesterCert, requesterKeyPair.getPrivate(), entityPrincipal,
-                response.getTransactionId());
-
-        for (java.security.cert.Certificate o : response.getCertStore().getCertificates(null)) {
-            System.out.println("Certificate:");
-            System.out.println(o);
+        int i = 0;
+        for (java.security.cert.Certificate certificate : certs){
+            chain[i++]= certificate;
+            System.out.println("Zertifikate"+response);
+            System.out.println(certificate);
         }
 
-       System.out.println(response);
     }
-
 }
