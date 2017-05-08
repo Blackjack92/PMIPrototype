@@ -1,9 +1,10 @@
 package com.serialization;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.Serializable;
+import org.bouncycastle.openssl.PEMParser;
+import org.bouncycastle.pkcs.PKCS10CertificationRequest;
+import org.bouncycastle.pkcs.jcajce.JcaPKCS10CertificationRequest;
+
+import java.io.*;
 import java.util.Base64;
 
 /**
@@ -20,6 +21,17 @@ public class ObjectDeserializer {
         Object o = ois.readObject();
         ois.close();
         return (T)o;
+    }
+
+    /**
+     * Read the certificate request from Base64 string.
+     */
+    // CSR: Certificate Singing Request
+    public static PKCS10CertificationRequest fromCSRString(String s) throws IOException {
+        String decodedString = new String(Base64.getUrlDecoder().decode(s));
+        PEMParser pemParser = new PEMParser(new StringReader(decodedString));
+        Object parsedObj = pemParser.readObject();
+        return parsedObj instanceof PKCS10CertificationRequest ? (PKCS10CertificationRequest)parsedObj : null;
     }
 
 }

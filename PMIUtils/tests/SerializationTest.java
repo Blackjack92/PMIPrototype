@@ -2,16 +2,19 @@ import com.serialization.KeyPairReader;
 import com.serialization.ObjectDeserializer;
 import com.serialization.ObjectSerializer;
 import com.serialization.SimpleCertificate;
+import org.bouncycastle.operator.ContentSigner;
+import org.bouncycastle.operator.OperatorCreationException;
+import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
+import org.bouncycastle.pkcs.PKCS10CertificationRequest;
+import org.bouncycastle.pkcs.PKCS10CertificationRequestBuilder;
+import org.bouncycastle.pkcs.jcajce.JcaPKCS10CertificationRequestBuilder;
 import org.junit.jupiter.api.Test;
 
+import javax.security.auth.x500.X500Principal;
 import java.io.IOException;
-import java.security.KeyPair;
-import java.security.PrivateKey;
-import java.security.PublicKey;
+import java.security.*;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Created by kevin on 05.05.17.
@@ -63,6 +66,34 @@ public class SerializationTest {
 
         assertEquals(privateKey, keyPair.getPrivate());
         assertEquals(publicKey, keyPair.getPublic());
+    }
+
+    @Test
+    void serializeCSR() throws NoSuchAlgorithmException, OperatorCreationException, IOException {
+        KeyPair requestKeyPair = SerializationTest.createRandomKeyPair();
+        X500Principal entitySubject = new X500Principal("CN=jscep.org, L=Cardiff, ST=Wales, C=UK");
+        PKCS10CertificationRequestBuilder csrBuilder = new JcaPKCS10CertificationRequestBuilder(entitySubject, requestKeyPair.getPublic());
+
+        // Sign the request
+        JcaContentSignerBuilder csrSignerBuilder = new JcaContentSignerBuilder("SHA1withRSA");
+        ContentSigner csrSigner = csrSignerBuilder.build(requestKeyPair.getPrivate());
+        PKCS10CertificationRequest csr = csrBuilder.build(csrSigner);
+
+        // Serialize to base64 string
+        String serialized = ObjectSerializer.toString(csr);
+        assertNotNull(serialized);
+
+        // Deserialize from base64 string
+        PKCS10CertificationRequest deserialized = ObjectDeserializer.fromCSRString(serialized);
+        assertNotNull(deserialized);
+
+        assertTrue(csr.equals(deserialized));
+    }
+
+    private static KeyPair createRandomKeyPair() throws NoSuchAlgorithmException {
+        KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA");
+        keyPairGenerator.initialize(1024);
+        return keyPairGenerator.genKeyPair();
     }
 
 }
