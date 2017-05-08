@@ -1,4 +1,5 @@
 import com.serialization.ObjectDeserializer;
+import com.serialization.ObjectSerializer;
 import org.bouncycastle.operator.OperatorCreationException;
 import org.bouncycastle.pkcs.PKCS10CertificationRequest;
 import org.jscep.client.EnrollmentResponse;
@@ -48,9 +49,15 @@ public class PKIService {
             PKCS10CertificationRequest csr = ObjectDeserializer.fromCSRString(request);
             EnrollmentResponse res = jscep.enrol(csr);
 
+            TransactionId transactionId = res.getTransactionId();
+            String serializeId = ObjectSerializer.toString(transactionId);
+            String serializedPrincipal = ObjectSerializer.toString(jscep.getPrincipal());
+
             redirectUrl += "Success:"  + res.isSuccess()
                     + "_Pending:" + res.isPending()
-                    + "_Failure:" + res.isFailure();
+                    + "_Failure:" + res.isFailure()
+                    + "_TransId:" + serializeId
+                    + "_Principal:" + serializedPrincipal;
         } catch (Exception e) {
             e.printStackTrace();
             redirectUrl += e.getMessage();
@@ -63,10 +70,8 @@ public class PKIService {
     @Path("request/revoke/{serialNumber}")
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
     public void revokeRequest(@PathParam("serialNumber") String request) {
-
+        // TODO: email administrator
     }
-
-
 
     /**
      * Difference to poll is that poll is used with the transaction id, not with serial number
@@ -81,25 +86,25 @@ public class PKIService {
         // Test: http://localhost:8080/PMITest_war_exploded/pki/get/5208e918c6dc96a6d6ff
         BigInteger parsedSerialNumber = new BigInteger(serialNumber, 16);
         X509Certificate certificate = jscep.getCertificate(parsedSerialNumber);
-        return certificate.toString();
+        return certificate == null ? null : certificate.toString();
     }
 
     @GET
     @Path("poll/{principal}/{transactionId}")
     @Produces(MediaType.TEXT_PLAIN)
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
-    public String poll(@PathParam("principal") String principal, @PathParam("transactionId") String transactionId) {
-        X500Principal parsedPrincipal = null;
-        TransactionId parsedTransactionId = null;
+    public String poll(@PathParam("principal") String principal, @PathParam("transactionId") String transactionId) throws IOException, ClassNotFoundException {
+        X500Principal parsedPrincipal = ObjectDeserializer.fromString(principal);
+        TransactionId parsedTransactionId = ObjectDeserializer.fromString(transactionId);
         X509Certificate certificate =  jscep.pollCertificate(parsedPrincipal, parsedTransactionId);
-        return certificate.toString();
+        return certificate == null ? null : certificate.toString();
     }
 
     @DELETE
     @Path("revoke/{serialNumber}")
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
     public void revoke(@PathParam("serialNumber") String serialNumber) {
-
+        // TODO: email to administrator
     }
 
     @GET
@@ -107,6 +112,10 @@ public class PKIService {
     @Produces(MediaType.TEXT_PLAIN)
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
     public String validate(@PathParam("pkc") String pkc) {
+        // TODO: validate a given pkc
+        // 1) has valid X509 structure ?
+        // 2) dates are okay ?
+        // 3) already revoked ?
         return null;
     }
 }

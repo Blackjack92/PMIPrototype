@@ -36,6 +36,7 @@ import java.util.Date;
 public class JSCEPManagement {
 
     private final KeyPair jscepKeyPair;
+    private final X500Principal principal;
     private final X509Certificate certificate;
     private final Client client;
 
@@ -47,19 +48,30 @@ public class JSCEPManagement {
 
         // Create key pair and certificate for the communication with the SCEP server
         jscepKeyPair = createRandomKeyPair();
+        principal = new X500Principal("CN=jscep.org, L=Cardiff, ST=Wales, C=UK");
         certificate = createCertificate();
     }
 
+    /**
+     * TODO: change this method, so that the subject names of the self signed certificate
+     * and from the request are equals
+     * Note: if you're using a self-signed certificate,
+     * your certificate subject X500 name must be the same as
+     * the subject in your certificate-signing request.
+     * @return
+     * @throws CertificateException
+     * @throws OperatorCreationException
+     */
     private X509Certificate createCertificate() throws CertificateException, OperatorCreationException {
         // Mandatory
-        X500Principal requesterIssuer = new X500Principal("CN=jscep.org, L=Cardiff, ST=Wales, C=UK");
+        X500Principal requesterIssuer = principal;
         BigInteger serial = BigInteger.ONE;
         Calendar calendar = Calendar.getInstance();
         calendar.add(Calendar.DATE, -1); // yesterday
         Date notBefore = calendar.getTime();
         calendar.add(Calendar.DATE, +2); // tomorrow
         Date notAfter = calendar.getTime();
-        X500Principal requesterSubject = new X500Principal("CN=jscep.org, L=Cardiff, ST=Wales, C=UK"); // doesn't need to be the same as issuer
+        X500Principal requesterSubject = new X500Principal("CN=jscep.org, L=Cardiff, ST=Wales, C=UK"); // doesn't need to be the same as principal
         JcaX509v3CertificateBuilder certBuilder = new JcaX509v3CertificateBuilder(requesterIssuer, serial, notBefore, notAfter, requesterSubject, jscepKeyPair.getPublic());
 
         // Create own certificate
@@ -90,21 +102,42 @@ public class JSCEPManagement {
     public X509Certificate getCertificate(BigInteger serialNumber) {
         try {
             CertStore store = client.getCertificate(certificate, jscepKeyPair.getPrivate(), serialNumber);
+            return getFirstCertificateFromCertStore(store);
+        } catch (ClientException | OperationFailureException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    private static X509Certificate getFirstCertificateFromCertStore(CertStore store) {
+        if (store == null) {return null; }
+
+        try {
             Collection<? extends Certificate> certs = store.getCertificates(null);
             for (Certificate c : certs) {
                 if (c instanceof X509Certificate) {
                     return (X509Certificate)c;
                 }
             }
-            return null;
-        } catch (Exception e) {
+            return  null;
+        } catch (CertStoreException e) {
             e.printStackTrace();
             return null;
         }
     }
 
+    public X500Principal getPrincipal() {
+        return principal;
+    }
+
     public X509Certificate pollCertificate(X500Principal principal, TransactionId transactionId) {
-        return null;
+        try {
+            EnrollmentResponse response = client.poll(certificate, jscepKeyPair.getPrivate(), principal, transactionId);
+            return response.isSuccess() ? getFirstCertificateFromCertStore(response.getCertStore()) : null;
+        } catch (ClientException | TransactionException e) {
+            e.printStackTrace();
+            return null;
+        }
     }
 
     public KeyPair getOwnKeyPair() {
