@@ -11,7 +11,9 @@ import org.jscep.client.DefaultCallbackHandler;
 import org.jscep.client.EnrollmentResponse;
 import org.jscep.client.verification.CertificateVerifier;
 import org.jscep.client.verification.OptimisticCertificateVerifier;
+import org.jscep.transaction.OperationFailureException;
 import org.jscep.transaction.TransactionException;
+import org.jscep.transaction.TransactionId;
 import org.jscep.transport.response.Capabilities;
 
 import javax.security.auth.callback.CallbackHandler;
@@ -22,9 +24,9 @@ import java.net.URL;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
-import java.security.cert.CertificateException;
-import java.security.cert.X509Certificate;
+import java.security.cert.*;
 import java.util.Calendar;
+import java.util.Collection;
 import java.util.Date;
 
 /**
@@ -83,6 +85,26 @@ public class JSCEPManagement {
 
     public EnrollmentResponse enrol(PKCS10CertificationRequest csr) throws ClientException, TransactionException {
         return client.enrol(certificate, jscepKeyPair.getPrivate(), csr);
+    }
+
+    public X509Certificate getCertificate(BigInteger serialNumber) {
+        try {
+            CertStore store = client.getCertificate(certificate, jscepKeyPair.getPrivate(), serialNumber);
+            Collection<? extends Certificate> certs = store.getCertificates(null);
+            for (Certificate c : certs) {
+                if (c instanceof X509Certificate) {
+                    return (X509Certificate)c;
+                }
+            }
+            return null;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    public X509Certificate pollCertificate(X500Principal principal, TransactionId transactionId) {
+        return null;
     }
 
     public KeyPair getOwnKeyPair() {

@@ -1,20 +1,9 @@
 import com.serialization.ObjectDeserializer;
-import com.serialization.SimpleCertificate;
-import org.bouncycastle.cert.X509CertificateHolder;
-import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter;
-import org.bouncycastle.cert.jcajce.JcaX509v3CertificateBuilder;
-import org.bouncycastle.operator.ContentSigner;
 import org.bouncycastle.operator.OperatorCreationException;
-import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
 import org.bouncycastle.pkcs.PKCS10CertificationRequest;
-import org.jscep.client.Client;
-import org.jscep.client.DefaultCallbackHandler;
 import org.jscep.client.EnrollmentResponse;
-import org.jscep.client.verification.CertificateVerifier;
-import org.jscep.client.verification.OptimisticCertificateVerifier;
-import org.jscep.transport.response.Capabilities;
+import org.jscep.transaction.TransactionId;
 
-import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.x500.X500Principal;
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.*;
@@ -23,14 +12,9 @@ import javax.ws.rs.core.MediaType;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.net.MalformedURLException;
-import java.net.URL;
-import java.security.KeyPair;
-import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
-import java.util.Calendar;
-import java.util.Date;
 
 /**
  * Class name: ${CLASS_NAME}
@@ -82,12 +66,33 @@ public class PKIService {
 
     }
 
+
+
+    /**
+     * Difference to poll is that poll is used with the transaction id, not with serial number
+     * @param serialNumber
+     * @return
+     */
     @GET
-    @Path("poll/{serialNumber}")
+    @Path("get/{serialNumber}")
     @Produces(MediaType.TEXT_PLAIN)
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
-    public String poll(@PathParam("serialNumber") String serialNumber) {
-        return null;
+    public String get(@PathParam("serialNumber") String serialNumber) {
+        // Test: http://localhost:8080/PMITest_war_exploded/pki/get/5208e918c6dc96a6d6ff
+        BigInteger parsedSerialNumber = new BigInteger(serialNumber, 16);
+        X509Certificate certificate = jscep.getCertificate(parsedSerialNumber);
+        return certificate.toString();
+    }
+
+    @GET
+    @Path("poll/{principal}/{transactionId}")
+    @Produces(MediaType.TEXT_PLAIN)
+    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+    public String poll(@PathParam("principal") String principal, @PathParam("transactionId") String transactionId) {
+        X500Principal parsedPrincipal = null;
+        TransactionId parsedTransactionId = null;
+        X509Certificate certificate =  jscep.pollCertificate(parsedPrincipal, parsedTransactionId);
+        return certificate.toString();
     }
 
     @DELETE
