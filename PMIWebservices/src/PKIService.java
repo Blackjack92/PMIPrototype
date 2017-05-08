@@ -1,18 +1,36 @@
 import com.serialization.ObjectDeserializer;
 import com.serialization.SimpleCertificate;
+import org.bouncycastle.cert.X509CertificateHolder;
+import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter;
+import org.bouncycastle.cert.jcajce.JcaX509v3CertificateBuilder;
+import org.bouncycastle.operator.ContentSigner;
+import org.bouncycastle.operator.OperatorCreationException;
+import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
+import org.bouncycastle.pkcs.PKCS10CertificationRequest;
 import org.jscep.client.Client;
 import org.jscep.client.DefaultCallbackHandler;
+import org.jscep.client.EnrollmentResponse;
 import org.jscep.client.verification.CertificateVerifier;
 import org.jscep.client.verification.OptimisticCertificateVerifier;
+import org.jscep.transport.response.Capabilities;
 
 import javax.security.auth.callback.CallbackHandler;
+import javax.security.auth.x500.X500Principal;
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import java.io.IOException;
+import java.math.BigInteger;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
+import java.security.NoSuchAlgorithmException;
+import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
+import java.util.Calendar;
+import java.util.Date;
 
 /**
  * Class name: ${CLASS_NAME}
@@ -22,16 +40,10 @@ import java.net.URL;
 @Path("pki")
 public class PKIService {
 
-    private final CertificateVerifier verifier;
-    private final CallbackHandler handler;
-    private final URL url;
-    private final Client client;
+    private final JSCEPManagement jscep;
 
-    public PKIService() throws MalformedURLException {
-        verifier = new OptimisticCertificateVerifier();
-        handler = new DefaultCallbackHandler(verifier);
-        url = new URL("http://141.28.105.137/scep/scep");
-        client = new Client(url, handler);
+    public PKIService() throws OperatorCreationException, MalformedURLException, NoSuchAlgorithmException, CertificateException {
+        jscep = new JSCEPManagement();
     }
 
     @GET
@@ -49,9 +61,13 @@ public class PKIService {
         String redirectUrl = "../../status/";
 
         try {
-            SimpleCertificate certificate = ObjectDeserializer.fromString(request);
-            redirectUrl += certificate.getSerialNumber();
-        } catch (IOException | ClassNotFoundException e) {
+            PKCS10CertificationRequest csr = ObjectDeserializer.fromCSRString(request);
+            EnrollmentResponse res = jscep.enrol(csr);
+
+            redirectUrl += "Success:"  + res.isSuccess()
+                    + "_Pending:" + res.isPending()
+                    + "_Failure:" + res.isFailure();
+        } catch (Exception e) {
             e.printStackTrace();
             redirectUrl += e.getMessage();
         }
