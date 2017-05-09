@@ -33,14 +33,14 @@ import java.util.Date;
  * Class name: ${CLASS_NAME}
  * Created by kevin on 08.05.17.
  */
-public class JSCEPManagement {
+class JSCEPManagement {
 
     private final KeyPair jscepKeyPair;
-    private final X500Principal principal;
+    private final X500Principal subject;
     private final X509Certificate certificate;
     private final Client client;
 
-    public JSCEPManagement() throws MalformedURLException, NoSuchAlgorithmException, CertificateException, OperatorCreationException {
+    JSCEPManagement() throws MalformedURLException, NoSuchAlgorithmException, CertificateException, OperatorCreationException {
         CertificateVerifier verifier = new OptimisticCertificateVerifier();
         CallbackHandler handler = new DefaultCallbackHandler(verifier);
         URL url = new URL("http://141.28.105.137/scep/scep");
@@ -48,58 +48,15 @@ public class JSCEPManagement {
 
         // Create key pair and certificate for the communication with the SCEP server
         jscepKeyPair = createRandomKeyPair();
-        principal = new X500Principal("CN=jscep.org, L=Cardiff, ST=Wales, C=UK");
+        subject = new X500Principal("CN=jscep.org, L=Cardiff, ST=Wales, C=UK");
         certificate = createCertificate();
     }
 
-    /**
-     * TODO: change this method, so that the subject names of the self signed certificate
-     * and from the request are equals
-     * Note: if you're using a self-signed certificate,
-     * your certificate subject X500 name must be the same as
-     * the subject in your certificate-signing request.
-     * @return
-     * @throws CertificateException
-     * @throws OperatorCreationException
-     */
-    private X509Certificate createCertificate() throws CertificateException, OperatorCreationException {
-        // Mandatory
-        X500Principal requesterIssuer = principal;
-        BigInteger serial = BigInteger.ONE;
-        Calendar calendar = Calendar.getInstance();
-        calendar.add(Calendar.DATE, -1); // yesterday
-        Date notBefore = calendar.getTime();
-        calendar.add(Calendar.DATE, +2); // tomorrow
-        Date notAfter = calendar.getTime();
-        X500Principal requesterSubject = new X500Principal("CN=jscep.org, L=Cardiff, ST=Wales, C=UK"); // doesn't need to be the same as principal
-        JcaX509v3CertificateBuilder certBuilder = new JcaX509v3CertificateBuilder(requesterIssuer, serial, notBefore, notAfter, requesterSubject, jscepKeyPair.getPublic());
-
-        // Create own certificate
-        String sigAlg = getSignatureAlgo(client);
-        JcaContentSignerBuilder certSignerBuilder = new JcaContentSignerBuilder(sigAlg); // from above
-        ContentSigner certSigner = certSignerBuilder.build(jscepKeyPair.getPrivate());
-        X509CertificateHolder certHolder = certBuilder.build(certSigner);
-        JcaX509CertificateConverter converter = new JcaX509CertificateConverter();
-        return converter.getCertificate(certHolder);
-    }
-
-    public static KeyPair createRandomKeyPair() throws NoSuchAlgorithmException {
-        KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA");
-        keyPairGenerator.initialize(1024);
-        return keyPairGenerator.genKeyPair();
-    }
-
-    public static String getSignatureAlgo(Client client) {
-        // Usable signature algorithms
-        Capabilities caps = client.getCaCapabilities();
-        return caps.getStrongestSignatureAlgorithm();
-    }
-
-    public EnrollmentResponse enrol(PKCS10CertificationRequest csr) throws ClientException, TransactionException {
+    EnrollmentResponse enrol(PKCS10CertificationRequest csr) throws ClientException, TransactionException {
         return client.enrol(certificate, jscepKeyPair.getPrivate(), csr);
     }
 
-    public X509Certificate getCertificate(BigInteger serialNumber) {
+    X509Certificate getCertificate(BigInteger serialNumber) {
         try {
             CertStore store = client.getCertificate(certificate, jscepKeyPair.getPrivate(), serialNumber);
             return getFirstCertificateFromCertStore(store);
@@ -109,7 +66,17 @@ public class JSCEPManagement {
         }
     }
 
-    private static X509Certificate getFirstCertificateFromCertStore(CertStore store) {
+    X509Certificate pollCertificate(X500Principal subject, TransactionId transactionId) {
+        try {
+            EnrollmentResponse response = client.poll(certificate, jscepKeyPair.getPrivate(), subject, transactionId);
+            return response.isSuccess() ? getFirstCertificateFromCertStore(response.getCertStore()) : null;
+        } catch (ClientException | TransactionException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    private X509Certificate getFirstCertificateFromCertStore(CertStore store) {
         if (store == null) {return null; }
 
         try {
@@ -126,25 +93,55 @@ public class JSCEPManagement {
         }
     }
 
-    public X500Principal getPrincipal() {
-        return principal;
+    X500Principal getSubject() {
+        return subject;
     }
 
-    public X509Certificate pollCertificate(X500Principal principal, TransactionId transactionId) {
-        try {
-            EnrollmentResponse response = client.poll(certificate, jscepKeyPair.getPrivate(), principal, transactionId);
-            return response.isSuccess() ? getFirstCertificateFromCertStore(response.getCertStore()) : null;
-        } catch (ClientException | TransactionException e) {
-            e.printStackTrace();
-            return null;
-        }
-    }
-
-    public KeyPair getOwnKeyPair() {
+    private KeyPair getOwnKeyPair() {
         return jscepKeyPair;
     }
 
-    public X509Certificate getOwnCertificate() throws CertificateException, OperatorCreationException {
+    private X509Certificate getOwnCertificate() throws CertificateException, OperatorCreationException {
         return certificate;
+    }
+
+    /**
+     * TODO: change this method, so that the subject names of the self signed certificate
+     * and from the request are equals
+     * Note: if you're using a self-signed certificate,
+     * your certificate subject X500 name must be the same as
+     * the subject in your certificate-signing request.
+     */
+    private X509Certificate createCertificate() throws CertificateException, OperatorCreationException {
+        // Mandatory
+        X500Principal requesterIssuer = subject;
+        BigInteger serial = BigInteger.ONE;
+        Calendar calendar = Calendar.getInstance();
+        calendar.add(Calendar.DATE, -1); // yesterday
+        Date notBefore = calendar.getTime();
+        calendar.add(Calendar.DATE, +2); // tomorrow
+        Date notAfter = calendar.getTime();
+        X500Principal requesterSubject = new X500Principal("CN=jscep.org, L=Cardiff, ST=Wales, C=UK"); // doesn't need to be the same as subject
+        JcaX509v3CertificateBuilder certBuilder = new JcaX509v3CertificateBuilder(requesterIssuer, serial, notBefore, notAfter, requesterSubject, jscepKeyPair.getPublic());
+
+        // Create own certificate
+        String sigAlg = getSignatureAlgo(client);
+        JcaContentSignerBuilder certSignerBuilder = new JcaContentSignerBuilder(sigAlg); // from above
+        ContentSigner certSigner = certSignerBuilder.build(jscepKeyPair.getPrivate());
+        X509CertificateHolder certHolder = certBuilder.build(certSigner);
+        JcaX509CertificateConverter converter = new JcaX509CertificateConverter();
+        return converter.getCertificate(certHolder);
+    }
+
+    private static KeyPair createRandomKeyPair() throws NoSuchAlgorithmException {
+        KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA");
+        keyPairGenerator.initialize(1024);
+        return keyPairGenerator.genKeyPair();
+    }
+
+    private static String getSignatureAlgo(Client client) {
+        // Usable signature algorithms
+        Capabilities caps = client.getCaCapabilities();
+        return caps.getStrongestSignatureAlgorithm();
     }
 }

@@ -1,42 +1,67 @@
-import com.serialization.ObjectSerializer;
-import com.serialization.SimpleCertificate;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.ClientProtocolException;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.commons.cli.*;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.util.Scanner;
 
 /**
- * Created by kevin on 03.05.17.
+ * Class name: ${CLASS_NAME}
+ * Created by kevin on 09.05.17.
  */
 public class Main {
-    public static void main(String[] args) throws ClientProtocolException, IOException {
-        /* HttpClient client = new DefaultHttpClient();
-        HttpGet request = new HttpGet("http://141.28.105.137:8080/pmi/cacertificates");
-        HttpResponse response = client.execute(request);
-        BufferedReader rd = new BufferedReader(new InputStreamReader(response.getEntity().getContent()));
-        String line = "";
-        while ((line = rd.readLine()) != null) {
-            System.out.println(line);
-        } */
 
-        SimpleCertificate certificate = new SimpleCertificate("1234", "pubkey", "John Doe");
+    public static void main(String[] args) throws ParseException {
+        CertificateManagement cm = new CertificateManagement();
 
-        HttpClient client = new DefaultHttpClient();
-        //HttpPost post = new HttpPost("http://localhost:8080/PMITest_war_exploded/pkc/request/create/" + ObjectSerializer.toString(certificate));
-        String test = "http://localhost:8080/PMITest_war_exploded/pkc/request/create/" + ObjectSerializer.toString(certificate);
-        HttpPost post = new HttpPost(test);
-        HttpResponse response = client.execute(post);
-        BufferedReader rd = new BufferedReader(new InputStreamReader(response.getEntity().getContent()));
-        String line = "";
-        while ((line = rd.readLine()) != null) {
-            System.out.println(line);
+        CommandLineParser parser = new DefaultParser();
+        HelpFormatter formatter = new HelpFormatter();
+        Options options = new ConsoleOptions().getOptions();
+        Scanner scanner = new Scanner(System.in);
+
+        System.out.println("PMIClient started...");
+        while (true) {
+            String test = scanner.nextLine();
+            String[] input = test.split(" ");
+            try {
+                CommandLine cmd = parser.parse(options, input, true);
+
+                if (cmd.hasOption("q")) {
+                    scanner.close();
+                    System.out.println("Program quit.");
+                    System.exit(0);
+                    return;
+                } else if (cmd.hasOption("r")) {
+                    System.out.print("Enter subject:");
+                    String subject = scanner.nextLine();
+                    System.out.print("Enter public key filename:");
+                    String pubFileName = scanner.nextLine();
+                    System.out.print("Enter private key filename:");
+                    String privFileName = scanner.nextLine();
+                    cm.createCertificateRequest(subject, pubFileName, privFileName);
+                } else if (cmd.hasOption("h")) {
+                    formatter.printHelp("PMIClient", options);
+                } else if (cmd.hasOption("p")) {
+                    System.out.print("Enter transaction id:");
+                    String transactionId = scanner.nextLine();
+                    System.out.println("Enter subject:");
+                    String subject = scanner.nextLine();
+                    cm.pollCertificate(subject, transactionId);
+                } else if (cmd.hasOption("g")) {
+                    System.out.print("Enter serial number:");
+                    String serialNumber = scanner.nextLine();
+                    cm.getCertificate(serialNumber);
+                } else if (cmd.hasOption("v")) {
+                    // TODO: implement validate
+                    cm.validateCertificate(null);
+                } else if (cmd.hasOption("k")) {
+                    // TODO: implement revoke certificate
+                    cm.revokeCertificate(null);
+                } else if (cmd.hasOption("q")) {
+                    // TODO: implement revoke certificate request
+                    cm.revokeCertificateRequest(null);
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+                formatter.printHelp("PMIClient", options);
+            }
         }
     }
 }

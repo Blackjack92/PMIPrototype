@@ -51,13 +51,13 @@ public class PKIService {
 
             TransactionId transactionId = res.getTransactionId();
             String serializeId = ObjectSerializer.toString(transactionId);
-            String serializedPrincipal = ObjectSerializer.toString(jscep.getPrincipal());
+            String serializedSubject = ObjectSerializer.toString(jscep.getSubject());
 
             redirectUrl += "Success:"  + res.isSuccess()
                     + "_Pending:" + res.isPending()
                     + "_Failure:" + res.isFailure()
                     + "_TransId:" + serializeId
-                    + "_Principal:" + serializedPrincipal;
+                    + "_Subject:" + serializedSubject;
         } catch (Exception e) {
             e.printStackTrace();
             redirectUrl += e.getMessage();
@@ -86,7 +86,7 @@ public class PKIService {
         // Test: http://localhost:8080/PMITest_war_exploded/pki/get/5208e918c6dc96a6d6ff
         BigInteger parsedSerialNumber = new BigInteger(serialNumber, 16);
         X509Certificate certificate = jscep.getCertificate(parsedSerialNumber);
-        return certificate == null ? null : certificate.toString();
+        return certificate == null ? "No certificate found" : certificate.toString();
     }
 
     @GET
@@ -97,7 +97,7 @@ public class PKIService {
         X500Principal parsedPrincipal = ObjectDeserializer.fromString(principal);
         TransactionId parsedTransactionId = ObjectDeserializer.fromString(transactionId);
         X509Certificate certificate =  jscep.pollCertificate(parsedPrincipal, parsedTransactionId);
-        return certificate == null ? null : certificate.toString();
+        return certificate == null ? "No certificate found" : certificate.toString();
     }
 
     @DELETE
@@ -111,7 +111,8 @@ public class PKIService {
     @Path("validate/{pkc}")
     @Produces(MediaType.TEXT_PLAIN)
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
-    public String validate(@PathParam("pkc") String pkc) {
+    public String validate(@PathParam("pkc") String pkc) throws IOException, ClassNotFoundException {
+        // X509Certificate certificate = ObjectDeserializer.fromString(pkc);
         // TODO: validate a given pkc
         // 1) has valid X509 structure ?
         // 2) dates are okay ?

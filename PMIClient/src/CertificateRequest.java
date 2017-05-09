@@ -31,8 +31,8 @@ public class CertificateRequest {
         KeyPair keyPair = createRandomKeyPair();
         PKCS10CertificationRequest csr = createCSR(keyPair);
         String serializedCSR = ObjectSerializer.toString(csr);
-        String test = "http://localhost:8080/PMITest_war_exploded/pki/request/create/" + serializedCSR;
-        HttpPost post = new HttpPost(test);
+        String url = "http://localhost:8080/PMITest_war_exploded/pki/request/create/" + serializedCSR;
+        HttpPost post = new HttpPost(url);
         HttpResponse response = client.execute(post);
         BufferedReader rd = new BufferedReader(new InputStreamReader(response.getEntity().getContent()));
         String line = "";

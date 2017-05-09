@@ -1,5 +1,3 @@
-import org.bouncycastle.asn1.DERPrintableString;
-import org.bouncycastle.asn1.pkcs.PKCSObjectIdentifiers;
 import org.bouncycastle.cert.X509CertificateHolder;
 import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter;
 import org.bouncycastle.cert.jcajce.JcaX509v3CertificateBuilder;
@@ -8,7 +6,6 @@ import org.bouncycastle.operator.OperatorCreationException;
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
 import org.bouncycastle.pkcs.PKCS10CertificationRequest;
 import org.bouncycastle.pkcs.PKCS10CertificationRequestBuilder;
-import org.bouncycastle.pkcs.jcajce.JcaPKCS10CertificationRequest;
 import org.bouncycastle.pkcs.jcajce.JcaPKCS10CertificationRequestBuilder;
 import org.jscep.client.Client;
 import org.jscep.client.ClientException;
@@ -41,14 +38,14 @@ public class Test {
 
         CallbackHandler handler = new DefaultCallbackHandler(new OptimisticCertificateVerifier());
         URL url = new URL("http://141.28.105.137/scep/scep");
+        // URL url = new URL("http://141.28.104.153/scep/scep");
         Client client = new Client(url, handler);
 
         // Create key for request
-        KeyPair requestKeyPair = createRandomKeyPair();
+        KeyPair clientKeyPair = createRandomKeyPair();
         X500Principal entitySubject = new X500Principal("CN=jscep.org, L=Cardiff, ST=Wales, C=UK");
-        //X500Principal entitySubject = new X500Principal("CN=jscep.org, L=Cardiff, ST=Wales, C=UK");
         PKCS10CertificationRequestBuilder csrBuilder =
-                new JcaPKCS10CertificationRequestBuilder(entitySubject, requestKeyPair.getPublic());
+                new JcaPKCS10CertificationRequestBuilder(entitySubject, clientKeyPair.getPublic());
 
         // Add attributes to the request
         // DERPrintableString password = new DERPrintableString("SecretChallenge");
@@ -56,14 +53,14 @@ public class Test {
 
         // Sign the request
         JcaContentSignerBuilder csrSignerBuilder = new JcaContentSignerBuilder("SHA1withRSA");
-        ContentSigner csrSigner = csrSignerBuilder.build(requestKeyPair.getPrivate());
+        ContentSigner csrSigner = csrSignerBuilder.build(clientKeyPair.getPrivate());
         PKCS10CertificationRequest csr = csrBuilder.build(csrSigner);
 
         // Create a self signed certificate for communication
-        KeyPair ownCertificateKeyPair = createRandomKeyPair();
-        X509Certificate ownCertificate = createOwnCertificate(ownCertificateKeyPair, client);
+        KeyPair jscepKeyPair = createRandomKeyPair();
+        X509Certificate ownCertificate = createOwnCertificate(jscepKeyPair, client);
 
-        EnrollmentResponse res = client.enrol(ownCertificate, ownCertificateKeyPair.getPrivate(), csr);
+        EnrollmentResponse res = client.enrol(ownCertificate, jscepKeyPair.getPrivate(), csr);
         System.out.println(res.isPending());
     }
 
