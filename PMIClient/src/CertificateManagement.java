@@ -1,10 +1,12 @@
 import com.serialization.KeyPairReader;
+import com.serialization.ObjectDeserializer;
 import com.serialization.ObjectSerializer;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.bouncycastle.openssl.jcajce.JcaPEMWriter;
 import org.bouncycastle.operator.ContentSigner;
 import org.bouncycastle.operator.OperatorCreationException;
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
@@ -16,11 +18,11 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 
 import javax.security.auth.x500.X500Principal;
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.security.KeyPair;
 import java.security.NoSuchAlgorithmException;
+import java.security.cert.X509Certificate;
+import java.util.Scanner;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -68,40 +70,68 @@ class CertificateManagement {
             System.out.println("IsFailure: " + matcher.group(3));
             System.out.println("TransId: " + matcher.group(4));
             System.out.println("Subject: " + matcher.group(5));
+            System.out.println("RequestString: " + matcher.group(5) + "/" + matcher.group(4));
         }
     }
 
     void pollCertificate(String subject, String transactionId) throws IOException {
+        pollCertificate(subject + "/" + transactionId);
+    }
+
+    void pollCertificate(String requestString) throws IOException {
         HttpClient client = new DefaultHttpClient();
-        String url = "http://localhost:8080/PMITest_war_exploded/pki/poll/" + subject + "/" + transactionId;
+        String url = "http://localhost:8080/PMITest_war_exploded/pki/poll/" + requestString;
         System.out.println("Url: " + url);
         HttpGet get = new HttpGet(url);
         HttpResponse response = client.execute(get);
-        printResponse(response, "No certificate found");
+        X509Certificate certificate = convertToCertificate(response);
+        System.out.println(certificate == null ? "No certificate found." : certificate);
+        storeCertificateDialog(certificate);
     }
 
-    void getCertificate(String serialNumber) throws IOException {
+    void getCertificate(String serialNumber) throws IOException, ClassNotFoundException {
         HttpClient client = new DefaultHttpClient();
         String url = "http://localhost:8080/PMITest_war_exploded/pki/get/" + serialNumber;
         System.out.println("Url: " + url);
         HttpGet get = new HttpGet(url);
         HttpResponse response = client.execute(get);
-        printResponse(response, "No certificate found");
+        X509Certificate certificate = convertToCertificate(response);
+        System.out.println(certificate == null ? "No certificate found." : certificate);
+        storeCertificateDialog(certificate);
+    }
+
+    private void storeCertificateDialog(X509Certificate certificate) {
+        Scanner scanner = new Scanner(System.in);
+        System.out.println("Store certificate [Y/N]?");
+        boolean decided = false;
+        while(!decided) {
+            String text = scanner.nextLine();
+            if ("Y".equals(text)) {
+                storeCertificate(certificate);
+                return;
+            } else if ("N".equals(text)) {
+                return;
+            }
+        }
+    }
+
+    void storeCertificate(X509Certificate certificate) {
+        try {
+            System.out.print("Enter file name:");
+            String filename = new Scanner(System.in).nextLine();
+            Writer writer = new FileWriter(filename);
+            JcaPEMWriter jcaPemWriter = new JcaPEMWriter(writer);
+            jcaPemWriter.writeObject(certificate);
+            jcaPemWriter.flush();
+            jcaPemWriter.close();
+            System.out.println("Certificate written to: " + filename);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     void validateCertificate(String certificateFileName) {
         // TODO: implement validate
-        System.out.println("Is not supported at the moment.");
-    }
-
-    // Eventually more sense with certificateFileName
-    void revokeCertificate(String serialNumber) {
-        // TODO: implement revoke
-        System.out.println("Is not supported at the moment.");
-    }
-
-    void revokeCertificateRequest(String transactionId) {
-        // TODO: implement revoke certificate request
         System.out.println("Is not supported at the moment.");
     }
 
@@ -115,6 +145,34 @@ class CertificateManagement {
                 System.out.println(line);
             }
         }
+    }
+
+    private static String convertStreamToString(java.io.InputStream is) {
+        java.util.Scanner s = new java.util.Scanner(is).useDelimiter("\\A");
+        return s.hasNext() ? s.next() : "";
+    }
+
+    // Eventually more sense with certificateFileName
+    void revokeCertificate(String serialNumber) {
+        // TODO: implement revoke
+        System.out.println("Is not supported at the moment.");
+    }
+
+    void revokeCertificateRequest(String transactionId) {
+        // TODO: implement revoke certificate request
+        System.out.println("Is not supported at the moment.");
+    }
+
+    private X509Certificate convertToCertificate(HttpResponse response) {
+        try {
+            String content = convertStreamToString(response.getEntity().getContent());
+            String serializedCertificate = content.replace("=", "");
+            return ObjectDeserializer.fromString(serializedCertificate);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+
     }
 
     private PKCS10CertificationRequest createCSR(String subject, KeyPair requestKeyPair) throws OperatorCreationException, NoSuchAlgorithmException {

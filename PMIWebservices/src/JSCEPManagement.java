@@ -53,6 +53,7 @@ class JSCEPManagement {
     }
 
     EnrollmentResponse enrol(PKCS10CertificationRequest csr) throws ClientException, TransactionException {
+        // csr.getSubject(); --> create a new subject
         return client.enrol(certificate, jscepKeyPair.getPrivate(), csr);
     }
 

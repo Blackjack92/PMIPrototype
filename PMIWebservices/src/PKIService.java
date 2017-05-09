@@ -82,11 +82,11 @@ public class PKIService {
     @Path("get/{serialNumber}")
     @Produces(MediaType.TEXT_PLAIN)
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
-    public String get(@PathParam("serialNumber") String serialNumber) {
+    public String get(@PathParam("serialNumber") String serialNumber) throws IOException {
         // Test: http://localhost:8080/PMITest_war_exploded/pki/get/5208e918c6dc96a6d6ff
         BigInteger parsedSerialNumber = new BigInteger(serialNumber, 16);
         X509Certificate certificate = jscep.getCertificate(parsedSerialNumber);
-        return certificate == null ? "No certificate found" : certificate.toString();
+        return certificate == null ? "No certificate found" : ObjectSerializer.toString(certificate);
     }
 
     @GET
@@ -97,7 +97,7 @@ public class PKIService {
         X500Principal parsedPrincipal = ObjectDeserializer.fromString(principal);
         TransactionId parsedTransactionId = ObjectDeserializer.fromString(transactionId);
         X509Certificate certificate =  jscep.pollCertificate(parsedPrincipal, parsedTransactionId);
-        return certificate == null ? "No certificate found" : certificate.toString();
+        return certificate == null ? "No certificate found" : ObjectSerializer.toString(certificate);
     }
 
     @DELETE

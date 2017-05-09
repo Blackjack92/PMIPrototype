@@ -39,11 +39,14 @@ public class Main {
                 } else if (cmd.hasOption("h")) {
                     formatter.printHelp("PMIClient", options);
                 } else if (cmd.hasOption("p")) {
-                    System.out.print("Enter transaction id:");
-                    String transactionId = scanner.nextLine();
-                    System.out.println("Enter subject:");
-                    String subject = scanner.nextLine();
-                    cm.pollCertificate(subject, transactionId);
+                    //System.out.print("Enter transaction id:");
+                    //String transactionId = scanner.nextLine();
+                    //System.out.println("Enter subject:");
+                    //String subject = scanner.nextLine();
+                    //cm.pollCertificate(subject, transactionId);
+                    System.out.print("Enter request string:");
+                    String requestString = scanner.nextLine();
+                    cm.pollCertificate(requestString);
                 } else if (cmd.hasOption("g")) {
                     System.out.print("Enter serial number:");
                     String serialNumber = scanner.nextLine();
