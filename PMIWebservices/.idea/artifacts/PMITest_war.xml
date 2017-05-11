@@ -6,6 +6,7 @@
       <element id="directory" name="WEB-INF">
         <element id="directory" name="lib">
           <element id="file-copy" path="$PROJECT_DIR$/../PMIUtils/out/artifacts/PMIUtils_jar/PMIUtils.jar" />
+          <element id="file-copy" path="$APPLICATION_HOME_DIR$/redist/annotations-java8.jar" />
         </element>
       </element>
     </root>

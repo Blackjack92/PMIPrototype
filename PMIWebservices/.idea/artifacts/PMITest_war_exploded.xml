@@ -16,6 +16,7 @@
           <element id="file-copy" path="$USER_HOME$/Data/HFU/WissenschaftlicherMitarbeiter/Thesen/2017-03 IT Sicherheit Updates mit Zertifikaten/develop/libs/slf4j-simple-1.7.25.jar" />
           <element id="file-copy" path="$USER_HOME$/Data/HFU/WissenschaftlicherMitarbeiter/Thesen/2017-03 IT Sicherheit Updates mit Zertifikaten/develop/libs/bcprov-ext-jdk15on-156.jar" />
           <element id="file-copy" path="$PROJECT_DIR$/../PMIUtils/out/artifacts/PMIUtils_jar/PMIUtils.jar" />
+          <element id="file-copy" path="$APPLICATION_HOME_DIR$/redist/annotations-java8.jar" />
         </element>
       </element>
       <element id="javaee-facet-resources" facet="PMIWebservices/web/Web" />
