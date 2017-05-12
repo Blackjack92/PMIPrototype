@@ -1,4 +1,7 @@
+import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.*;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.MediaType;
 
 /**
  * Created by kevin on 04.05.17.
@@ -6,33 +9,65 @@ import javax.ws.rs.*;
 @Path("pmi")
 public class PMIService {
 
+    private final PMIManagement pmi;
+
+    public PMIService() {
+        pmi = new PMIManagement();
+    }
+
+    @GET
+    @Path("status/{message}")
+    @Produces(MediaType.TEXT_HTML)
+    @Consumes(MediaType.TEXT_PLAIN)
+    public String status(@PathParam("message") String message) {
+        return message;
+    }
+
     @POST
-    @Path("request/create")
-    public void createRequest(@FormParam("request") String request) {
-
+    @Path("request/create/{request}")
+    @Consumes(MediaType.TEXT_PLAIN)
+    public void createRequest(@FormParam("request") String request, @Context HttpServletResponse servletResponse) {
+        // TODO: implement create request
     }
 
-    @DELETE
-    @Path("request/revoke")
-    public void revokeRequest(@FormParam("request") String request) {
-
+    /**
+     * Difference to poll is that poll is used with the transaction id, not with serial number
+     * @param serialNumber
+     * @return
+     */
+    @GET
+    @Path("get/{serialNumber}")
+    @Produces(MediaType.TEXT_PLAIN)
+    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+    public String get(@PathParam("serialNumber") String serialNumber) {
+        // TODO: implement get
+        return "Not supported at the moment.";
     }
 
     @GET
-    @Path("poll")
-    public String poll(@FormParam("id") String id) {
-        return null;
+    @Path("poll/{transactionId}")
+    @Produces(MediaType.TEXT_PLAIN)
+    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+    public String poll(@PathParam("transactionId") String transactionId) {
+        // TODO: implement poll
+        return "Not supported at the moment.";
     }
 
     @DELETE
-    @Path("revoke")
-    public void revoke(@FormParam("id") String id) {
-
+    @Path("revoke/{serialNumber}")
+    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+    public void revoke(@PathParam("serialNumber") String serialNumber) {
+        // TODO: email to administrator
     }
 
     @GET
-    @Path("validate")
-    public String validate(@FormParam("ac") String ac) {
+    @Path("validate/{pkc}/{ac}")
+    @Produces(MediaType.TEXT_PLAIN)
+    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+    public String validate(@PathParam("pkc") String pkc, @PathParam("ac") String ac) {
+        // TODO: validate the given ac
+        // X509Certificate deserializedPKC = ObjectDeserializer.fromString(pkc);
+        // AttributeCertificate deserializedAC = ObjectDeserializer.fromString(ac);
         return null;
     }
 }

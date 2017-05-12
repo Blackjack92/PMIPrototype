@@ -25,10 +25,10 @@ import java.security.cert.X509Certificate;
 @Path("pki")
 public class PKIService {
 
-    private final JSCEPManagement jscep;
+    private final PKIManagement pki;
 
     public PKIService() throws OperatorCreationException, MalformedURLException, NoSuchAlgorithmException, CertificateException {
-        jscep = new JSCEPManagement();
+        pki = new PKIManagement();
     }
 
     @GET
@@ -47,11 +47,11 @@ public class PKIService {
 
         try {
             PKCS10CertificationRequest csr = ObjectDeserializer.fromCSRString(request);
-            EnrollmentResponse res = jscep.enrol(csr);
+            EnrollmentResponse res = pki.enrol(csr);
 
             TransactionId transactionId = res.getTransactionId();
             String serializeId = ObjectSerializer.toString(transactionId);
-            String serializedSubject = ObjectSerializer.toString(jscep.getSubject());
+            String serializedSubject = ObjectSerializer.toString(pki.getSubject());
 
             redirectUrl += "Success:"  + res.isSuccess()
                     + "_Pending:" + res.isPending()
@@ -66,13 +66,6 @@ public class PKIService {
         servletResponse.sendRedirect(redirectUrl);
     }
 
-    @DELETE
-    @Path("request/revoke/{serialNumber}")
-    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
-    public void revokeRequest(@PathParam("serialNumber") String request) {
-        // TODO: email administrator
-    }
-
     /**
      * Difference to poll is that poll is used with the transaction id, not with serial number
      * @param serialNumber
@@ -85,7 +78,7 @@ public class PKIService {
     public String get(@PathParam("serialNumber") String serialNumber) throws IOException {
         // Test: http://localhost:8080/PMITest_war_exploded/pki/get/5208e918c6dc96a6d6ff
         BigInteger parsedSerialNumber = new BigInteger(serialNumber, 16);
-        X509Certificate certificate = jscep.getCertificate(parsedSerialNumber);
+        X509Certificate certificate = pki.getCertificate(parsedSerialNumber);
         return certificate == null ? "No certificate found" : ObjectSerializer.toString(certificate);
     }
 
@@ -96,7 +89,7 @@ public class PKIService {
     public String poll(@PathParam("principal") String principal, @PathParam("transactionId") String transactionId) throws IOException, ClassNotFoundException {
         X500Principal parsedPrincipal = ObjectDeserializer.fromString(principal);
         TransactionId parsedTransactionId = ObjectDeserializer.fromString(transactionId);
-        X509Certificate certificate =  jscep.pollCertificate(parsedPrincipal, parsedTransactionId);
+        X509Certificate certificate =  pki.pollCertificate(parsedPrincipal, parsedTransactionId);
         return certificate == null ? "No certificate found" : ObjectSerializer.toString(certificate);
     }
 

@@ -33,14 +33,14 @@ import java.util.Date;
  * Class name: ${CLASS_NAME}
  * Created by kevin on 08.05.17.
  */
-class JSCEPManagement {
+class PKIManagement {
 
     private final KeyPair jscepKeyPair;
     private final X500Principal subject;
     private final X509Certificate certificate;
     private final Client client;
 
-    JSCEPManagement() throws MalformedURLException, NoSuchAlgorithmException, CertificateException, OperatorCreationException {
+    PKIManagement() throws MalformedURLException, NoSuchAlgorithmException, CertificateException, OperatorCreationException {
         CertificateVerifier verifier = new OptimisticCertificateVerifier();
         CallbackHandler handler = new DefaultCallbackHandler(verifier);
         URL url = new URL("http://141.28.105.137/scep/scep");
