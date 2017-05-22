@@ -38,7 +38,7 @@ public class MainRequestCertificate {
     public static void main(String[] args) throws IOException, NoSuchAlgorithmException, OperatorCreationException, CertificateException, ClientException, TransactionException, CertStoreException, InterruptedException {
 
         URL url = new URL("http://141.28.105.137/scep/scep");
-        // CertificateVerifier verifier = new ConsoleCertificateVerifier();
+        // org.jscep.validation.CertificateVerifier verifier = new ConsoleCertificateVerifier();
         CallbackHandler handler = new DefaultCallbackHandler(new OptimisticCertificateVerifier());
 
         Client client = new Client(url, handler);

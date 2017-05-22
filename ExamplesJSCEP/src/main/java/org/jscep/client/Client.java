@@ -88,7 +88,7 @@ import org.slf4j.LoggerFactory;
  * <pre>
  * // Create the client
  * URL server = new URL(&quot;http://jscep.org/scep/pkiclient.exe&quot;);
- * CertificateVerifier verifier = new ConsoleCertificateVerifier();
+ * org.jscep.validation.CertificateVerifier verifier = new ConsoleCertificateVerifier();
  * Client client = new Client(server, verifier);
  *
  * // Invoke operations on the client.
@@ -148,9 +148,9 @@ public final class Client {
 
     /**
      * Constructs a new <tt>Client</tt> instance using the provided
-     * <tt>CertificateVerifier</tt> for the provided URL.
+     * <tt>org.jscep.validation.CertificateVerifier</tt> for the provided URL.
      * 
-     * The provided <tt>CertificateVerifier</tt> is used to verify that the
+     * The provided <tt>org.jscep.validation.CertificateVerifier</tt> is used to verify that the
      * identity of the SCEP server matches what the client expects.
      *
      * @param url

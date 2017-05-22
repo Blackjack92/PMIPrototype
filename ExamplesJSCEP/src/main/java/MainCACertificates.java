@@ -5,6 +5,7 @@ import org.jscep.client.Client;
 import org.jscep.client.DefaultCallbackHandler;
 import org.jscep.client.verification.CertificateVerifier;
 import org.jscep.client.verification.ConsoleCertificateVerifier;
+import org.jscep.client.verification.OptimisticCertificateVerifier;
 import sun.security.x509.X509CertImpl;
 
 import javax.security.auth.callback.CallbackHandler;
@@ -20,7 +21,7 @@ public class MainCACertificates {
     public static void main(String[] args) throws Exception {
 
         URL url = new URL("http://141.28.105.137/scep/scep");
-        CertificateVerifier verifier = new DummyVerifier(); // new ConsoleCertificateVerifier();
+        CertificateVerifier verifier = new OptimisticCertificateVerifier(); // new ConsoleCertificateVerifier();
         CallbackHandler handler = new DefaultCallbackHandler(verifier);
 
         Client client = new Client(url, handler);

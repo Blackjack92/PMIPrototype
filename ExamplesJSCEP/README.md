@@ -70,18 +70,18 @@ The callback handler is used to verify the CA certificate being sent by the SCEP
   
 ### Default Callback Mechanism
 
-The default callback mechanism provides a `DefaultCallbackHandler` which delegates verification to a `CertificateVerifier` implementation.  jscep supports several strategies for verifying a certificate, including pre-provisioned certificates or digests, and an interactive console verifier. The following example shows the steps necessary to configure the console verifier:
+The default callback mechanism provides a `DefaultCallbackHandler` which delegates verification to a `org.jscep.validation.CertificateVerifier` implementation.  jscep supports several strategies for verifying a certificate, including pre-provisioned certificates or digests, and an interactive console verifier. The following example shows the steps necessary to configure the console verifier:
   
 ```java
-  CertificateVerifier verifier = new ConsoleCertificateVerifier();
+  org.jscep.validation.CertificateVerifier verifier = new ConsoleCertificateVerifier();
   CallbackHandler handler = new DefaultCallbackHandler(verifier);
 ```
 
 By default, jscep will request verification before each operation.  If you are performing a number of operations against the same SCEP server, you may wish to cache the users response by decorating the certificate verifier, like so:
   
 ```java
-  CertificateVerifier consoleVerifier = new ConsoleCertificateVerifier();
-  CertificateVerifier verifier = new CachingCertificateVerifier(consoleVerifier);
+  org.jscep.validation.CertificateVerifier consoleVerifier = new ConsoleCertificateVerifier();
+  org.jscep.validation.CertificateVerifier verifier = new CachingCertificateVerifier(consoleVerifier);
   CallbackHandler handler = new DefaultCallbackHandler(verifier);
 ```
 

@@ -43,8 +43,8 @@ public class SimplePKCRequest {
     public static void main(String[] args) throws MalformedURLException, NoSuchAlgorithmException, OperatorCreationException, CertIOException, CertificateException, ClientException, TransactionException {
 
         // CallbackHandler
-        // CertificateVerifier consoleVerifier = new ConsoleCertificateVerifier();
-        //CertificateVerifier verifier = new CachingCertificateVerifier(consoleVerifier);
+        // org.jscep.validation.CertificateVerifier consoleVerifier = new ConsoleCertificateVerifier();
+        //org.jscep.validation.CertificateVerifier verifier = new CachingCertificateVerifier(consoleVerifier);
         CallbackHandler handler = new DefaultCallbackHandler(new OptimisticCertificateVerifier());
 
         // JSCEP Server
