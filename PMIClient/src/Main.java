@@ -52,8 +52,9 @@ public class Main {
                     String serialNumber = scanner.nextLine();
                     cm.getCertificate(serialNumber);
                 } else if (cmd.hasOption("v")) {
-                    // TODO: implement validate
-                    cm.validateCertificate(null);
+                    System.out.print("Enter certificate file name:");
+                    String certificateFileName = scanner.nextLine();
+                    cm.validateCertificate(certificateFileName);
                 } else if (cmd.hasOption("k")) {
                     // TODO: implement revoke certificate
                     cm.revokeCertificate(null);

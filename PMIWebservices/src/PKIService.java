@@ -2,6 +2,7 @@ import com.serialization.ObjectDeserializer;
 import com.serialization.ObjectSerializer;
 import org.bouncycastle.operator.OperatorCreationException;
 import org.bouncycastle.pkcs.PKCS10CertificationRequest;
+import org.jscep.client.ClientException;
 import org.jscep.client.EnrollmentResponse;
 import org.jscep.transaction.TransactionId;
 
@@ -68,8 +69,6 @@ public class PKIService {
 
     /**
      * Difference to poll is that poll is used with the transaction id, not with serial number
-     * @param serialNumber
-     * @return
      */
     @GET
     @Path("get/{serialNumber}")
@@ -104,12 +103,8 @@ public class PKIService {
     @Path("validate/{pkc}")
     @Produces(MediaType.TEXT_PLAIN)
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
-    public String validate(@PathParam("pkc") String pkc) throws IOException, ClassNotFoundException {
-        // X509Certificate certificate = ObjectDeserializer.fromString(pkc);
-        // TODO: validate a given pkc
-        // 1) has valid X509 structure ?
-        // 2) dates are okay ?
-        // 3) already revoked ?
-        return null;
+    public String validate(@PathParam("pkc") String pkc) throws IOException, ClassNotFoundException, ClientException {
+        X509Certificate certificate = ObjectDeserializer.fromString(pkc);
+        return pki.validateCertificate(certificate);
     }
 }

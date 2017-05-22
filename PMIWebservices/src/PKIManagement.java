@@ -15,6 +15,8 @@ import org.jscep.transaction.OperationFailureException;
 import org.jscep.transaction.TransactionException;
 import org.jscep.transaction.TransactionId;
 import org.jscep.transport.response.Capabilities;
+import validation.CertificateValidationException;
+import validation.CertificateValidator;
 
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.x500.X500Principal;
@@ -28,6 +30,8 @@ import java.security.cert.*;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Class name: ${CLASS_NAME}
@@ -40,6 +44,11 @@ class PKIManagement {
     private final X509Certificate certificate;
     private final Client client;
 
+    X500Principal getSubject() {
+        return subject;
+    }
+
+
     PKIManagement() throws MalformedURLException, NoSuchAlgorithmException, CertificateException, OperatorCreationException {
         CertificateVerifier verifier = new OptimisticCertificateVerifier();
         CallbackHandler handler = new DefaultCallbackHandler(verifier);
@@ -49,8 +58,9 @@ class PKIManagement {
         // Create key pair and certificate for the communication with the SCEP server
         jscepKeyPair = createRandomKeyPair();
         subject = new X500Principal("CN=jscep.org, L=Cardiff, ST=Wales, C=UK");
-        certificate = createCertificate();
+        certificate = createCertificate(subject, jscepKeyPair, client);
     }
+
 
     EnrollmentResponse enrol(PKCS10CertificationRequest csr) throws ClientException, TransactionException {
         // csr.getSubject(); --> create a new subject
@@ -77,43 +87,33 @@ class PKIManagement {
         }
     }
 
-    private X509Certificate getFirstCertificateFromCertStore(CertStore store) {
-        if (store == null) {return null; }
+    String validateCertificate(X509Certificate certificateToValidate) throws ClientException {
+
+        String validationResult = "";
 
         try {
-            Collection<? extends Certificate> certs = store.getCertificates(null);
-            for (Certificate c : certs) {
-                if (c instanceof X509Certificate) {
-                    return (X509Certificate)c;
-                }
-            }
-            return  null;
-        } catch (CertStoreException e) {
+            CertStore caCertStore  = client.getCaCertificate();
+            Collection<? extends Certificate> certificates = caCertStore.getCertificates(null);
+            Set<X509Certificate> caCertificates = certificates.stream().map(c -> (X509Certificate)c).collect(Collectors.toSet());
+            PKIXCertPathBuilderResult pathBuilderResult = CertificateValidator.verifyCertificate(certificateToValidate, caCertificates);
+            validationResult += "Validation was successful.\n";
+            validationResult += pathBuilderResult;
+        } catch (Exception e) {
             e.printStackTrace();
-            return null;
+            validationResult += "Validation was not successful.\n";
         }
-    }
 
-    X500Principal getSubject() {
-        return subject;
-    }
-
-    private KeyPair getOwnKeyPair() {
-        return jscepKeyPair;
-    }
-
-    private X509Certificate getOwnCertificate() throws CertificateException, OperatorCreationException {
-        return certificate;
+        return validationResult;
     }
 
     /**
      * TODO: change this method, so that the subject names of the self signed certificate
-     * and from the request are equals
+     * and from the request are equal
      * Note: if you're using a self-signed certificate,
      * your certificate subject X500 name must be the same as
      * the subject in your certificate-signing request.
      */
-    private X509Certificate createCertificate() throws CertificateException, OperatorCreationException {
+    private static X509Certificate createCertificate(X500Principal subject, KeyPair jscepKeyPair, Client client) throws CertificateException, OperatorCreationException {
         // Mandatory
         X500Principal requesterIssuer = subject;
         BigInteger serial = BigInteger.ONE;
@@ -144,5 +144,22 @@ class PKIManagement {
         // Usable signature algorithms
         Capabilities caps = client.getCaCapabilities();
         return caps.getStrongestSignatureAlgorithm();
+    }
+
+    private static X509Certificate getFirstCertificateFromCertStore(CertStore store) {
+        if (store == null) {return null; }
+
+        try {
+            Collection<? extends Certificate> certs = store.getCertificates(null);
+            for (Certificate c : certs) {
+                if (c instanceof X509Certificate) {
+                    return (X509Certificate)c;
+                }
+            }
+            return  null;
+        } catch (CertStoreException e) {
+            e.printStackTrace();
+            return null;
+        }
     }
 }

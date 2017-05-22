@@ -21,6 +21,8 @@ import javax.security.auth.x500.X500Principal;
 import java.io.*;
 import java.security.KeyPair;
 import java.security.NoSuchAlgorithmException;
+import java.security.cert.CertificateException;
+import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.util.Scanner;
 import java.util.regex.Matcher;
@@ -130,9 +132,41 @@ class CertificateManagement {
         }
     }
 
+    X509Certificate readCertificate(String fileName) {
+        try {
+
+            CertificateFactory fact = CertificateFactory.getInstance("X.509");
+            FileInputStream is = new FileInputStream (fileName);
+            X509Certificate certificate = (X509Certificate) fact.generateCertificate(is);
+            return certificate;
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (CertificateException e) {
+            e.printStackTrace();
+        }
+
+        return null;
+    }
+
     void validateCertificate(String certificateFileName) {
-        // TODO: implement validate
-        System.out.println("Is not supported at the moment.");
+        X509Certificate certificate = readCertificate(certificateFileName);
+        if (certificate == null) {
+            System.out.println("Could not read the certificate.");
+        } else {
+            HttpClient client = new DefaultHttpClient();
+            try {
+                String serializedCertificate = ObjectSerializer.toString(certificate);
+                String url = "http://localhost:8080/PMITest_war_exploded/pki/validate/" + serializedCertificate;
+                System.out.println("Url: " + url);
+                HttpGet get = new HttpGet(url);
+                HttpResponse response = client.execute(get);
+                printResponse(response, "No validation result returned.");
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     private void printResponse(HttpResponse response, String emptyResponseMessage) throws IOException {

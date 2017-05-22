@@ -32,6 +32,14 @@ cmake-build-debug/
 
 # IntelliJ
 /out/
+ExamplesJSCEP/classes/
+ExamplesJSCEP/target/
+ExamplesJSCEP/out/
+PMIClient/out/
+PMIExample/out/
+PMIUtils/out/
+PMIWebservices/out/
+
 
 # mpeltonen/sbt-idea plugin
 .idea_modules/

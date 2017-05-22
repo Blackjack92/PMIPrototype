@@ -1,3 +1,5 @@
+import org.bouncycastle.asn1.x509.AttributeCertificate;
+
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
