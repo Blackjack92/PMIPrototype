@@ -5,7 +5,6 @@ import org.bouncycastle.pkcs.PKCS10CertificationRequest;
 import org.jscep.client.ClientException;
 import org.jscep.client.EnrollmentResponse;
 import org.jscep.transaction.TransactionId;
-
 import javax.security.auth.x500.X500Principal;
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.*;

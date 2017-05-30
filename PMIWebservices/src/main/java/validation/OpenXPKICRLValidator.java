@@ -36,7 +36,7 @@ public class OpenXPKICRLValidator {
     public void verifyCertificateCRLs(X509Certificate cert) throws CertificateValidationException {
 
         try {
-            URL url = new URL("http://141.28.105.137/scep/scep");
+            URL url = new URL("http://141.28.104.153/scep/scep");
 
             CertificateVerifier verifier = new OptimisticCertificateVerifier(); // new ConsoleCertificateVerifier();
             CallbackHandler handler = new DefaultCallbackHandler(verifier);

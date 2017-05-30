@@ -52,7 +52,7 @@ class PKIManagement {
     PKIManagement() throws MalformedURLException, NoSuchAlgorithmException, CertificateException, OperatorCreationException {
         CertificateVerifier verifier = new OptimisticCertificateVerifier();
         CallbackHandler handler = new DefaultCallbackHandler(verifier);
-        URL url = new URL("http://141.28.105.137/scep/scep");
+        URL url = new URL("http://141.28.104.153/scep/scep");
         client = new Client(url, handler);
 
         // Create key pair and certificate for the communication with the SCEP server

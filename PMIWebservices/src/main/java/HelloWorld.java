@@ -2,6 +2,8 @@ import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 
+import static org.jscep.transport.TransportFactory.Method.GET;
+
 // The Java class will be hosted at the URI path "/helloworld"
 @Path("/helloworld")
 public class HelloWorld {

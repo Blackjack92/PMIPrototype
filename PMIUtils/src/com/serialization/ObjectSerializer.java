@@ -3,7 +3,6 @@ package com.serialization;
 import org.bouncycastle.openssl.jcajce.JcaPEMWriter;
 import org.bouncycastle.pkcs.PKCS10CertificationRequest;
 import org.bouncycastle.pkcs.jcajce.JcaPKCS10CertificationRequest;
-
 import java.io.*;
 import java.util.Base64;
 
