@@ -1,17 +1,12 @@
-
 import java.math.BigInteger;
 import java.security.KeyFactory;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.Security;
-import java.security.cert.Certificate;
-import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.security.spec.RSAPrivateCrtKeySpec;
 import java.security.spec.RSAPublicKeySpec;
-import java.util.Arrays;
 import java.util.Date;
-
 import com.sun.xml.internal.messaging.saaj.util.ByteInputStream;
 import org.bouncycastle.asn1.misc.MiscObjectIdentifiers;
 import org.bouncycastle.asn1.misc.NetscapeCertType;
@@ -39,7 +34,6 @@ import org.bouncycastle.jce.provider.X509AttrCertParser;
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
 import org.bouncycastle.operator.jcajce.JcaContentVerifierProviderBuilder;
 import org.bouncycastle.x509.X509V2AttributeCertificate;
-
 /**
  * Created by emre on 08.06.17.
  */
@@ -202,7 +196,6 @@ public class AttributeCertificateExample {
                 System.out.println("rolesyntax read from cert!");
             }
         }
-
         X509V2AttributeCertificate certificate = new X509V2AttributeCertificate(att.getEncoded());
         System.out.println(certificate);
 
@@ -219,12 +212,17 @@ public class AttributeCertificateExample {
         X509AttrCertParser parser = new X509AttrCertParser();
         parser.engineInit(new ByteInputStream(certificate.getEncoded(), certificate.getEncoded().length));
         X509V2AttributeCertificate certReadFromDB = (X509V2AttributeCertificate)parser.engineRead();
-        // Spalte 1: acSerial = certReadFromDB.getSerialNumber()
-        // Spalte 2: pkcSerial = certReadFromDB.getHolder().getSerialNumber()
-        // Spalte 3: encoded = certReadFromDB.getEncoded()
-        // String sql = "INSERT INTO " + dbName + " " +
-        //        "VALUES (" + acSerial + "," + pkcSerial + "," + encoded + ");";
-        System.out.println(certReadFromDB.getAttributes());
+        //Bytearray to String
+        StringBuilder sbuilder = new StringBuilder();
+        for (int i = 0; i < certReadFromDB.getEncoded().length; i++) {
+            sbuilder.append(certReadFromDB.getEncoded()[i]);
+        }
+        String encoded = sbuilder.toString();
 
+        BigInteger acSerial = certReadFromDB.getSerialNumber();
+        BigInteger pkcSerial = certReadFromDB.getHolder().getSerialNumber();
+        Database myDatabase = new Database();
+       // myDatabase.inserting(acSerial,pkcSerial,encoded);
+        myDatabase.selecting(acSerial,pkcSerial,encoded);
+       }
     }
-}
