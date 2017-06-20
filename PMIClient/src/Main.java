@@ -31,9 +31,9 @@ public class Main {
                 } else if (cmd.hasOption("r")) {
                     System.out.print("Enter subject:");
                     String subject = scanner.nextLine();
-                    System.out.print("Enter public key filename:");
+                    System.out.print("Enter public key file name:");
                     String pubFileName = scanner.nextLine();
-                    System.out.print("Enter private key filename:");
+                    System.out.print("Enter private key file name:");
                     String privFileName = scanner.nextLine();
                     cm.createCertificateRequest(subject, pubFileName, privFileName);
                 } else if (cmd.hasOption("h")) {
@@ -61,7 +61,15 @@ public class Main {
                 } else if (cmd.hasOption("q")) {
                     // TODO: implement revoke certificate request
                     cm.revokeCertificateRequest(null);
+                } else if (cmd.hasOption("a")) {
+                    System.out.println("Enter certificate file name:");
+                    String certificateFilename = scanner.nextLine();
+                    System.out.println("Enter requested attribute:");
+                    String attribute = scanner.nextLine();
+                    cm.createAttributeCertificateRequest(certificateFilename, attribute);
                 }
+
+
             } catch (Exception e) {
                 e.printStackTrace();
                 formatter.printHelp("PMIClient", options);

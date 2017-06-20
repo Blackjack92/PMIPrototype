@@ -1,3 +1,5 @@
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.math.BigInteger;
 import java.security.KeyFactory;
 import java.security.PrivateKey;
@@ -6,8 +8,14 @@ import java.security.Security;
 import java.security.cert.X509Certificate;
 import java.security.spec.RSAPrivateCrtKeySpec;
 import java.security.spec.RSAPublicKeySpec;
+import java.util.Arrays;
+import java.util.Base64;
 import java.util.Date;
+import java.util.stream.Collector;
+import java.util.stream.Collectors;
+
 import com.sun.xml.internal.messaging.saaj.util.ByteInputStream;
+import org.bouncycastle.asn1.*;
 import org.bouncycastle.asn1.misc.MiscObjectIdentifiers;
 import org.bouncycastle.asn1.misc.NetscapeCertType;
 import org.bouncycastle.asn1.x500.X500Name;
@@ -33,6 +41,7 @@ import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.jce.provider.X509AttrCertParser;
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
 import org.bouncycastle.operator.jcajce.JcaContentVerifierProviderBuilder;
+import org.bouncycastle.x509.X509Attribute;
 import org.bouncycastle.x509.X509V2AttributeCertificate;
 /**
  * Created by emre on 08.06.17.
@@ -85,6 +94,11 @@ public class AttributeCertificateExample {
     }
 
     public static void main(String args[]) throws Exception {
+
+
+        int serial = Database.GetNextFreeSerialNumber();
+        System.out.println(serial);
+
         Security.addProvider(new BouncyCastleProvider());
         //personal keys
         RSAPublicKeySpec pubKeySpec = new RSAPublicKeySpec(
@@ -124,12 +138,14 @@ public class AttributeCertificateExample {
             In practice the CA for the attribute certificate should be different to that of the client certificate
              */
         X509Certificate caCert = createAcIssuerCert(caPubKey, caPrivKey);
+        System.out.println(caCert.toString());
         X509Certificate clientCert = createClientCert(pubKey, caPrivKey, caPubKey);
+        System.out.println(clientCert.toString());
         // Instantiate a new AC generator
         X509v2AttributeCertificateBuilder acBldr = new X509v2AttributeCertificateBuilder(
                 new AttributeCertificateHolder(new JcaX509CertificateHolder(clientCert)),
                 new JcaAttributeCertificateIssuer(caCert),
-                new BigInteger("1"),
+                new BigInteger(String.valueOf(serial)),
                 new Date(System.currentTimeMillis() - 50000),         // not before
                 new Date(System.currentTimeMillis() + 50000)); // not after
         // the actual attributes
@@ -139,6 +155,8 @@ public class AttributeCertificateExample {
 
         //      finally create the AC
         X509AttributeCertificateHolder att = acBldr.build(new JcaContentSignerBuilder("SHA1WithRSA").setProvider("BC").build(caPrivKey));
+        System.out.println(att.toASN1Structure().getAcinfo().toString());
+
 
         //
         // starting here, we parse the newly generated AC
@@ -187,17 +205,28 @@ public class AttributeCertificateExample {
         // Attribute
         Attribute[] attribs = att.getAttributes();
         System.out.println("cert has " + attribs.length + " attributes:");
+        Arrays.stream(attribs).forEach(a ->
+                System.out.println(a.getAttrType() + ": " + Arrays.stream(a.getAttributeValues()).map(Object::toString).collect(Collectors.joining(","))));
+
         for (int i = 0; i < attribs.length; i++) {
             Attribute a = attribs[i];
             System.out.println("OID: " + a.getAttrType());
             // currently we only check for the presence of a 'RoleSyntax' attribute
 
+
             if (a.getAttrType().equals("2.5.24.72")) {
                 System.out.println("rolesyntax read from cert!");
             }
         }
-        X509V2AttributeCertificate certificate = new X509V2AttributeCertificate(att.getEncoded());
-        System.out.println(certificate);
+
+        //X509AttrCertParser parser = new X509AttrCertParser();
+        //parser.engineInit(new ByteInputStream(att.getEncoded(), att.getEncoded().length));
+        //Object obj = parser.engineRead();
+
+        //X509V2AttributeCertificate certificate = new X509V2AttributeCertificate(att.getEncoded());
+        //System.out.println("Generated certificate");
+
+        //System.out.println(certificate);
 
         // In die Datenbank speichern: --> certificate.getEncoded();
         // Auslesen aus der Datenbank: --> string (certficateEncoded) zurück (byte array)
@@ -209,20 +238,48 @@ public class AttributeCertificateExample {
          Object obj = parser.engineRead();
          */
 
-        X509AttrCertParser parser = new X509AttrCertParser();
-        parser.engineInit(new ByteInputStream(certificate.getEncoded(), certificate.getEncoded().length));
-        X509V2AttributeCertificate certReadFromDB = (X509V2AttributeCertificate)parser.engineRead();
-        //Bytearray to String
-        StringBuilder sbuilder = new StringBuilder();
-        for (int i = 0; i < certReadFromDB.getEncoded().length; i++) {
-            sbuilder.append(certReadFromDB.getEncoded()[i]);
-        }
-        String encoded = sbuilder.toString();
+        byte[] arr = att.getEncoded();
+        X509AttributeCertificateHolder holder = new X509AttributeCertificateHolder(arr);
+        for (int i = 0; i < holder.getAttributes().length; i++) {
+            Attribute attr1 = holder.getAttributes()[i];
+            Attribute attr2 = att.getAttributes()[i];
 
-        BigInteger acSerial = certReadFromDB.getSerialNumber();
-        BigInteger pkcSerial = certReadFromDB.getHolder().getSerialNumber();
+            System.out.println("Holder value after decode: " + attr1.getAttrValues());
+            System.out.println("Holder value before encode: " + attr2.getAttrValues());
+        }
+
+
+        BigInteger acSerial = att.getSerialNumber();
+        BigInteger pkcSerial = att.getHolder().getSerialNumber();
         Database myDatabase = new Database();
-       // myDatabase.inserting(acSerial,pkcSerial,encoded);
-        myDatabase.selecting(acSerial,pkcSerial,encoded);
-       }
+        myDatabase.inserting(acSerial,pkcSerial,Base64.getUrlEncoder().encodeToString(att.getEncoded()));
+        X509AttributeCertificateHolder readCertificate = myDatabase.selecting();
+        System.out.println(readCertificate);
+        // displayAC(readCertificate);
+
+    }
+
+/*
+    public static void displayAC(X509AttributeCertificateHolder attr) {
+        if (attr ==  null) {
+            System.out.println("AC is null.");
+            return;
+        }
+
+        System.out.println("Serial number: " + attr.getSerialNumber());
+        String issuerPrincipal = Arrays.stream(attr.getIssuer().getPrincipals()).map(p -> p.getName()).collect(Collectors.joining(","));
+        System.out.println("Issuer: " + issuerPrincipal);
+        System.out.println("Not before: " + attr.getNotBefore());
+        System.out.println("Not after: " + attr.getNotAfter());
+        System.out.println("Holder: " + attr.getHolder().getSerialNumber());
+
+        for (X509Attribute x509Attribute : attr.getAttributes()) {
+            System.out.println("Attribute: " + x509Attribute.getOID());
+            for (ASN1Encodable encodable : x509Attribute.getValues()) {
+                System.out.println("value: " + encodable.toString());
+            }
+        }
+    }
+*/
+
     }

@@ -1,3 +1,4 @@
+import com.serialization.AttributeCertificateRequest;
 import com.serialization.KeyPairReader;
 import com.serialization.ObjectDeserializer;
 import com.serialization.ObjectSerializer;
@@ -16,7 +17,6 @@ import org.bouncycastle.pkcs.jcajce.JcaPKCS10CertificationRequestBuilder;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
-
 import javax.security.auth.x500.X500Principal;
 import java.io.*;
 import java.security.KeyPair;
@@ -35,7 +35,7 @@ import java.util.regex.Pattern;
 class CertificateManagement {
 
     void createCertificateRequest(String subject, String pubFileName, String privFileName) throws Exception {
-        // Example subject: "CN=jscep.org, L=Cardiff, ST=Wales, C=UK"
+        // Example subject: "M"
         // Example public key: "/home/kevin/Projects/JavaProjects/PMI/clientKeys/public_key.der"
         // Example private key: "/home/kevin/Projects/JavaProjects/PMI/clientKeys/private_key.der"
 
@@ -217,5 +217,24 @@ class CertificateManagement {
         JcaContentSignerBuilder csrSignerBuilder = new JcaContentSignerBuilder("SHA1withRSA");
         ContentSigner csrSigner = csrSignerBuilder.build(requestKeyPair.getPrivate());
         return csrBuilder.build(csrSigner);
+    }
+
+    public void createAttributeCertificateRequest(String certificateFilename, String attribute) {
+        // Read certificate
+        X509Certificate certificate = null;
+        AttributeCertificateRequest request = new AttributeCertificateRequest(certificate, new String[]{attribute});
+
+        HttpClient client = new DefaultHttpClient();
+        try {
+            String serializedRequest = ObjectSerializer.toString(request);
+            String url = "http://localhost:8080/PMITest_war_exploded/pmi/request/create/" + serializedRequest;
+            System.out.println("Url: " + url);
+            HttpPost post = new HttpPost(url);
+            HttpResponse response = client.execute(post);
+            printResponse(response, "No attribute certificate issued.");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
     }
 }

@@ -33,8 +33,11 @@ public class ConsoleOptions {
         Option revoke = new Option("k", "revoke", false, "Revokes an enrolled certificate by serial number.");
         options.addOption(revoke);
 
-        Option revokeRequest = new Option("q", "revokerequest", false, "Revokes a certificate request");
+        Option revokeRequest = new Option("q", "revokerequest", false, "Revokes a certificate request.");
         options.addOption(revokeRequest);
+
+        Option createACRequest = new Option("a", "requestac", false, "Creates a attribute certificate request.");
+        options.addOption(createACRequest);
     }
 
     public Options getOptions() {

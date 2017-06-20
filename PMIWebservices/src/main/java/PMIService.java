@@ -1,9 +1,13 @@
+import com.serialization.AttributeCertificateRequest;
+import com.serialization.ObjectDeserializer;
 import org.bouncycastle.asn1.x509.AttributeCertificate;
+import org.bouncycastle.cert.X509AttributeCertificateHolder;
 
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
+import java.io.IOException;
 
 /**
  * Created by kevin on 04.05.17.
@@ -28,8 +32,18 @@ public class PMIService {
     @POST
     @Path("request/create/{request}")
     @Consumes(MediaType.TEXT_PLAIN)
-    public void createRequest(@FormParam("request") String request, @Context HttpServletResponse servletResponse) {
-        // TODO: implement create request
+    public void createRequest(@PathParam("request") String request, @Context HttpServletResponse servletResponse) throws IOException, ClassNotFoundException {
+        String redirectUrl = "../../status/";
+        AttributeCertificateRequest parsedRequest = ObjectDeserializer.fromString(request);
+
+        X509AttributeCertificateHolder holder = pmi.createAttributeCertificate(parsedRequest);
+
+        // 3) send redirect url with holder.encode();
+        // Check holder == null if null return failure
+        // else
+        // redirectUrl += holder.getEncoded();
+        servletResponse.sendRedirect(redirectUrl);
+
     }
 
     /**

@@ -1,9 +1,13 @@
 /**
  * Created by rz on 14.06.17.
  */
+import org.bouncycastle.cert.X509AttributeCertificateHolder;
+import org.bouncycastle.x509.X509V2AttributeCertificate;
+
 import java.io.ByteArrayInputStream;
 import java.math.BigInteger;
 import java.sql.*;
+import java.util.Base64;
 
 public class Database {
     // JDBC driver name and database URL
@@ -30,6 +34,7 @@ public class Database {
             //STEP 4: Execute a query
             System.out.println("Inserting records into the table...");
             stmt = conn.createStatement();
+
             String sql = "INSERT INTO ACCredentials " + "VALUES (" +acparam +"," +pkcparam +"," +"'"+encoded+"'" +")" + "";
             stmt.executeUpdate(sql);
             System.out.println("Inserted records into the table...");
@@ -56,9 +61,12 @@ public class Database {
         }//end try
         System.out.println("Goodbye!");
     }
-        public void selecting(BigInteger acparam, BigInteger pkcparam, String encoded) {
+
+    public X509AttributeCertificateHolder selecting() {
             Connection conn = null;
             Statement stmt = null;
+            X509AttributeCertificateHolder certificateHolder = null;
+
             try{
                 //STEP 2: Register JDBC driver
                 Class.forName("com.mysql.jdbc.Driver");
@@ -84,9 +92,11 @@ public class Database {
                     //Display values
                     System.out.print("AcSerial: " + acSerial+"\n");
                     System.out.print("PKCSerial: " + pkcSerial +"\n");
-                    //byte[] barray = b_encoded.getBytes();
-                    //System.out.println("Certificate: "+ barray);
-                    System.out.print("Certificate: " + b_encoded+"\n");
+                    System.out.print("CertificateHolder: " + b_encoded+"\n");
+
+                    // Convert to AC object
+                    byte[] data = Base64.getUrlDecoder().decode(b_encoded);
+                    certificateHolder = new X509AttributeCertificateHolder(data);
                 }
                 rs.close();
             }catch(SQLException se){
@@ -110,5 +120,26 @@ public class Database {
                 }//end finally try
             }//end try
             System.out.println("Goodbye!");
-        }//end main
+
+            return certificateHolder;
+        }
+
+        public static int GetNextFreeSerialNumber() throws ClassNotFoundException, SQLException {
+
+            String sql = "SELECT COUNT(*) FROM ACCredentials";
+
+            //STEP 2: Register JDBC driver
+            Class.forName("com.mysql.jdbc.Driver");
+            Connection conn = DriverManager.getConnection(DB_URL, USER, PASS);
+            Statement stmt = conn.createStatement();
+            ResultSet rs = stmt.executeQuery(sql);
+            while(rs.next()){
+                BigInteger lastUsed  = BigInteger.valueOf(rs.getLong("Count(*)"));
+                System.out.println(lastUsed);
+                return lastUsed.intValue() + 1;
+            }
+
+            return -1;
+        }
+
     }//end JDBCExample

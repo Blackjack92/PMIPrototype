@@ -13,7 +13,7 @@ public class MyApplication extends Application {
         HashSet h = new HashSet<Class<?>>();
         h.add( HelloWorld.class );
         h.add( PKIService.class );
-        // h.add( PMIService.class );
+        h.add( PMIService.class );
         return h;
     }
 }
