@@ -2,9 +2,7 @@
  * Created by rz on 14.06.17.
  */
 import org.bouncycastle.cert.X509AttributeCertificateHolder;
-import org.bouncycastle.x509.X509V2AttributeCertificate;
 
-import java.io.ByteArrayInputStream;
 import java.math.BigInteger;
 import java.sql.*;
 import java.util.Base64;

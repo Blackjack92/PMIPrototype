@@ -21,6 +21,7 @@ import javax.security.auth.x500.X500Principal;
 import java.io.*;
 import java.security.KeyPair;
 import java.security.NoSuchAlgorithmException;
+import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
@@ -149,7 +150,6 @@ class CertificateManagement {
 
         return null;
     }
-
     void validateCertificate(String certificateFileName) {
         X509Certificate certificate = readCertificate(certificateFileName);
         if (certificate == null) {
@@ -219,9 +219,16 @@ class CertificateManagement {
         return csrBuilder.build(csrSigner);
     }
 
-    public void createAttributeCertificateRequest(String certificateFilename, String attribute) {
+    public void createAttributeCertificateRequest(String certificateFilename, String attribute) throws CertificateException, IOException {
         // Read certificate
-        X509Certificate certificate = null;
+        //X509Certificate certificate = null;
+        X509Certificate certificate = readCertificate(certificateFilename);
+        if (certificate == null) {
+            System.out.println("No Certificate found.");
+        } else {
+            System.out.println(certificate);
+        }
+
         AttributeCertificateRequest request = new AttributeCertificateRequest(certificate, new String[]{attribute});
 
         HttpClient client = new DefaultHttpClient();
@@ -238,3 +245,4 @@ class CertificateManagement {
 
     }
 }
+

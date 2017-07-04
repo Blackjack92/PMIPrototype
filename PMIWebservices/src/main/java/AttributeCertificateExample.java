@@ -1,5 +1,19 @@
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
+import org.bouncycastle.asn1.ASN1Set;
+import org.bouncycastle.asn1.misc.MiscObjectIdentifiers;
+import org.bouncycastle.asn1.misc.NetscapeCertType;
+import org.bouncycastle.asn1.x500.X500Name;
+import org.bouncycastle.asn1.x500.X500NameBuilder;
+import org.bouncycastle.asn1.x500.style.BCStyle;
+import org.bouncycastle.asn1.x509.Attribute;
+import org.bouncycastle.asn1.x509.GeneralName;
+import org.bouncycastle.asn1.x509.RoleSyntax;
+import org.bouncycastle.asn1.x509.X509AttributeIdentifiers;
+import org.bouncycastle.cert.*;
+import org.bouncycastle.cert.jcajce.*;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
+import org.bouncycastle.operator.jcajce.JcaContentVerifierProviderBuilder;
+
 import java.math.BigInteger;
 import java.security.KeyFactory;
 import java.security.PrivateKey;
@@ -11,38 +25,8 @@ import java.security.spec.RSAPublicKeySpec;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.Date;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
-import com.sun.xml.internal.messaging.saaj.util.ByteInputStream;
-import org.bouncycastle.asn1.*;
-import org.bouncycastle.asn1.misc.MiscObjectIdentifiers;
-import org.bouncycastle.asn1.misc.NetscapeCertType;
-import org.bouncycastle.asn1.x500.X500Name;
-import org.bouncycastle.asn1.x500.X500NameBuilder;
-import org.bouncycastle.asn1.x500.style.BCStyle;
-import org.bouncycastle.asn1.x509.Attribute;
-import org.bouncycastle.asn1.x509.GeneralName;
-import org.bouncycastle.asn1.x509.RoleSyntax;
-import org.bouncycastle.asn1.x509.X509AttributeIdentifiers;
-import org.bouncycastle.cert.AttributeCertificateHolder;
-import org.bouncycastle.cert.AttributeCertificateIssuer;
-import org.bouncycastle.cert.X509AttributeCertificateHolder;
-import org.bouncycastle.cert.X509CertificateHolder;
-import org.bouncycastle.cert.X509v1CertificateBuilder;
-import org.bouncycastle.cert.X509v2AttributeCertificateBuilder;
-import org.bouncycastle.cert.X509v3CertificateBuilder;
-import org.bouncycastle.cert.jcajce.JcaAttributeCertificateIssuer;
-import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter;
-import org.bouncycastle.cert.jcajce.JcaX509CertificateHolder;
-import org.bouncycastle.cert.jcajce.JcaX509v1CertificateBuilder;
-import org.bouncycastle.cert.jcajce.JcaX509v3CertificateBuilder;
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
-import org.bouncycastle.jce.provider.X509AttrCertParser;
-import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
-import org.bouncycastle.operator.jcajce.JcaContentVerifierProviderBuilder;
-import org.bouncycastle.x509.X509Attribute;
-import org.bouncycastle.x509.X509V2AttributeCertificate;
 /**
  * Created by emre on 08.06.17.
  */

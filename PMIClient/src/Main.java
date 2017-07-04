@@ -68,8 +68,6 @@ public class Main {
                     String attribute = scanner.nextLine();
                     cm.createAttributeCertificateRequest(certificateFilename, attribute);
                 }
-
-
             } catch (Exception e) {
                 e.printStackTrace();
                 formatter.printHelp("PMIClient", options);

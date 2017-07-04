@@ -18,6 +18,7 @@ import org.jscep.transport.response.Capabilities;
 import validation.CertificateValidationException;
 import validation.CertificateValidator;
 
+import javax.print.attribute.SetOfIntegerSyntax;
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.x500.X500Principal;
 import java.math.BigInteger;
@@ -97,7 +98,7 @@ class PKIManagement {
             Set<X509Certificate> caCertificates = certificates.stream().map(c -> (X509Certificate)c).collect(Collectors.toSet());
             PKIXCertPathBuilderResult pathBuilderResult = CertificateValidator.verifyCertificate(certificateToValidate, caCertificates);
             validationResult += "Validation was successful.\n";
-            validationResult += pathBuilderResult;
+            //validationResult += pathBuilderResult;
         } catch (Exception e) {
             e.printStackTrace();
             validationResult += "Validation was not successful.\n";
