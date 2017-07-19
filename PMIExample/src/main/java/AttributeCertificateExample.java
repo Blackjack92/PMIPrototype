@@ -149,6 +149,7 @@ public class AttributeCertificateExample {
                 new Date(System.currentTimeMillis() - 50000),         // not before
                 new Date(System.currentTimeMillis() + 50000)); // not after
         // the actual attributes
+        //attribute noch hinzufügen
         GeneralName roleName = new GeneralName(GeneralName.uniformResourceIdentifier, "id://DAU123456789");
         GeneralName nameemre = new GeneralName(GeneralName.dNSName, "hs-furtwangen.de");
 
@@ -237,8 +238,8 @@ public class AttributeCertificateExample {
         BigInteger pkcSerial = att.getHolder().getSerialNumber();
         Database myDatabase = new Database();
         myDatabase.inserting(acSerial,pkcSerial,Base64.getUrlEncoder().encodeToString(att.getEncoded()));
-        X509AttributeCertificateHolder readCertificate = myDatabase.selecting();
-        System.out.println(readCertificate);
+        //X509AttributeCertificateHolder readCertificate = myDatabase.selecting();
+        //System.out.println(readCertificate);
         // displayAC(readCertificate);
 
     }

@@ -1,21 +1,30 @@
 import com.serialization.AttributeCertificateRequest;
 import com.serialization.KeyPairReader;
+import org.bouncycastle.asn1.x509.X509AttributeIdentifiers;
 import org.bouncycastle.cert.AttributeCertificateHolder;
 import org.bouncycastle.cert.X509AttributeCertificateHolder;
 import org.bouncycastle.cert.X509v2AttributeCertificateBuilder;
 import org.bouncycastle.cert.jcajce.JcaAttributeCertificateIssuer;
 import org.bouncycastle.cert.jcajce.JcaX509CertificateHolder;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import org.bouncycastle.openssl.jcajce.JcaPEMWriter;
+import org.bouncycastle.asn1.x509.X509AttributeIdentifiers;
+import org.bouncycastle.asn1.x509.RoleSyntax;
+import org.bouncycastle.asn1.*;
+
+import java.sql.ResultSet;
+import java.util.Base64;
 import org.bouncycastle.operator.OperatorCreationException;
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
 import org.jscep.client.Client;
 import org.jscep.client.ClientException;
 import org.omg.PortableServer.SERVANT_RETENTION_POLICY_ID;
+import org.bouncycastle.asn1.x509.GeneralName;
 import sun.security.x509.X509CertImpl;
 import validation.CertificateValidator;
-
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
+//import org.bouncycastle.util.encoders.Base64;
+import java.io.*;
+import java.lang.reflect.InvocationTargetException;
 import java.math.BigInteger;
 import java.net.MalformedURLException;
 import java.security.NoSuchAlgorithmException;
@@ -27,12 +36,10 @@ import java.sql.SQLException;
 import java.util.*;
 import java.util.stream.Collectors;
 
-/**
- * Created by kevin on 12.05.2017.
- */
 public class PMIManagement {
    // private final Client client;
-   //int serial = Database.GetNextFreeSerialNumber();
+   Database database = new Database();
+   //int serial = database.GetNextFreeSerialNumber();
 
     private HashMap<BigInteger, List<String>> allowedAttributes = new HashMap<>();
     public PMIManagement() throws SQLException, ClassNotFoundException {
@@ -84,20 +91,54 @@ public class PMIManagement {
         X509v2AttributeCertificateBuilder acBuilder = new X509v2AttributeCertificateBuilder(
                 new AttributeCertificateHolder(new JcaX509CertificateHolder(parsedRequest.getCertificate())),
                 new JcaAttributeCertificateIssuer(cert),
-                new BigInteger(String.valueOf(12)),
+                new BigInteger(String.valueOf(1)),
                 new Date(System.currentTimeMillis() - 50000),
                 new Date(System.currentTimeMillis() + 50000));
+        //Provider hinzufügen
         Security.addProvider(new BouncyCastleProvider());
-        // -->> priv Key vom cacertificate nicht erreichbar
+        //Aktuelle Attribute
+        GeneralName attributes = new GeneralName(GeneralName.uniformResourceIdentifier, "Room1");
+        acBuilder.addAttribute(X509AttributeIdentifiers.id_at_role, new RoleSyntax(attributes));
+        //Erzeuge Attribut Zertifikat
         X509AttributeCertificateHolder att = acBuilder.build(new JcaContentSignerBuilder("SHA1WithRSA").setProvider("BC").build(caprivkey));
-        System.out.println();
+        BigInteger acSerial = att.getSerialNumber();
+        BigInteger pkcSerial = att.getHolder().getSerialNumber();
+        String ac = Base64.getUrlEncoder().encodeToString(att.getEncoded());
+        //database.inserting2(acSerial,pkcSerial,ac);
+        database.inserting(acSerial,pkcSerial,ac);
 
+       // System.out.println();
 //X509AttributeCertificateHolder att = acBuilder
         // On success: -->
         // 1) Create ACHolder
         // 2) Store ACHolder in DB
         // 3) return holder
         return att;
+    }
+    public static String getFileContent(FileInputStream fis) throws IOException
+    {
+        try( BufferedReader br =
+                     new BufferedReader( new InputStreamReader(fis, "UTF-8" )))
+        {
+            StringBuilder sb = new StringBuilder();
+            String line;
+            while(( line = br.readLine()) != null ) {
+                sb.append( line );
+                sb.append( '\n' );
+            }
+            return sb.toString();
+        }
+    }
+    void storeCertificate(X509AttributeCertificateHolder att) {
+        try {
+            Writer writer = new FileWriter("/home/rz/Dokumente/PMIPrototype/ac.pem");
+            JcaPEMWriter jcaPemWriter = new JcaPEMWriter(writer);
+            jcaPemWriter.writeObject(att);
+            jcaPemWriter.flush();
+            jcaPemWriter.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 //    String validateCertificate(X509Certificate certificateToValidate) throws ClientException {
 //

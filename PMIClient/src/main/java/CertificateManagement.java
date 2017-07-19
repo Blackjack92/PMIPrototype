@@ -7,6 +7,7 @@ import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.bouncycastle.cert.X509AttributeCertificateHolder;
 import org.bouncycastle.openssl.jcajce.JcaPEMWriter;
 import org.bouncycastle.operator.ContentSigner;
 import org.bouncycastle.operator.OperatorCreationException;
@@ -14,21 +15,21 @@ import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
 import org.bouncycastle.pkcs.PKCS10CertificationRequest;
 import org.bouncycastle.pkcs.PKCS10CertificationRequestBuilder;
 import org.bouncycastle.pkcs.jcajce.JcaPKCS10CertificationRequestBuilder;
+import org.bouncycastle.util.encoders.Base64;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import javax.security.auth.x500.X500Principal;
 import java.io.*;
+import java.math.BigInteger;
 import java.security.KeyPair;
 import java.security.NoSuchAlgorithmException;
-import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.util.Scanner;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
 /**
  * Class name: ${CLASS_NAME}
  * Created by kevin on 09.05.17.
@@ -218,6 +219,30 @@ class CertificateManagement {
         ContentSigner csrSigner = csrSignerBuilder.build(requestKeyPair.getPrivate());
         return csrBuilder.build(csrSigner);
     }
+    public String getFileContent(FileInputStream in) throws FileNotFoundException {
+        //read AC local
+        in = new FileInputStream("/home/rz/Dokumente/PMIPrototype/ac.pem");
+        //FileInputstream umwandeln zu String
+        // String pem = getFileContent(in2);
+        byte[] data = new byte[0];
+        try {
+            String pem = getFileContent(in);
+            String pemdelimiter = pem.replace("-----BEGIN ATTRIBUTE CERTIFICATE-----", "");
+            pemdelimiter = pemdelimiter.replace("-----END ATTRIBUTE CERTIFICATE-----", "");
+            pemdelimiter = pemdelimiter.replace("==", "");
+            pemdelimiter = pemdelimiter.replaceAll("(?m)^[ \t]*\r?\n", "");
+            data = Base64.decode(pemdelimiter.getBytes());
+            X509AttributeCertificateHolder holder = new X509AttributeCertificateHolder(data);
+//            Database myDatabase = new Database();
+//            BigInteger acSerial = att.getSerialNumber();
+//            BigInteger pkcSerial = att.getHolder().getSerialNumber();
+//            //myDatabase.inserting(acSerial,pkcSerial,java.util.Base64.getUrlEncoder().encodeToString(holder.getEncoded()));
+//            myDatabase.inserting(acSerial,pkcSerial,null);
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+        return null;
+    }
 
     public void createAttributeCertificateRequest(String certificateFilename, String attribute) throws CertificateException, IOException {
         // Read certificate
@@ -226,7 +251,7 @@ class CertificateManagement {
         if (certificate == null) {
             System.out.println("No Certificate found.");
         } else {
-            System.out.println(certificate);
+            //System.out.println(certificate);
         }
 
         AttributeCertificateRequest request = new AttributeCertificateRequest(certificate, new String[]{attribute});

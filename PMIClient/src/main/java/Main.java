@@ -1,7 +1,7 @@
 import org.apache.commons.cli.*;
 
 import java.util.Scanner;
-
+import com.mysql.jdbc.Driver;
 /**
  * Class name: ${CLASS_NAME}
  * Created by kevin on 09.05.17.
