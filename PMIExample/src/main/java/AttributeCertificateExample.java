@@ -245,7 +245,7 @@ public class AttributeCertificateExample {
     }
 
 
- /*   public static void displayAC(X509AttributeCertificateHolder attr) {
+      /* public static void displayAC(X509AttributeCertificateHolder attr) {
         if (attr ==  null) {
             System.out.println("AC is null.");
             return;

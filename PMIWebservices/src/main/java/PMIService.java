@@ -16,6 +16,7 @@ import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.sql.SQLException;
 import java.util.Arrays;
+import java.util.Base64;
 
 @Path("pmi")
 public class PMIService {
@@ -41,10 +42,27 @@ public class PMIService {
         String redirectUrl = "../../status/";
         AttributeCertificateRequest parsedRequest = ObjectDeserializer.fromString(request);
         for (String attribute : parsedRequest.getAttributes()) {
-            redirectUrl += attribute;
+            redirectUrl += "\nAttribute: " + attribute;
         }
+        X509Certificate clientcert = parsedRequest.getCertificate();
+        redirectUrl += "\nSerialnumber: " + clientcert.getSerialNumber().toString() + "\nIssuer: " + clientcert.getIssuerX500Principal().toString() + "\nSubject: " + clientcert.getSubjectDN().toString();
 
         X509AttributeCertificateHolder holder = pmi.createAttributeCertificate(parsedRequest);
+
+        if (holder == null){
+            throw new UnsupportedOperationException("Kein Attribut-Zertifikat");
+        }
+
+
+        byte [] holder_encoded = holder.getEncoded();
+        //String ac = Base64.getUrlEncoder().encodeToString(att.getEncoded());
+
+        String encoded = Base64.getUrlEncoder().encodeToString(holder_encoded);
+
+        //String newString = new String(encoded);
+
+
+        redirectUrl += "\nAttribut-Zertifikat: " + encoded;
 
         // 3) send redirect url with holder.encode();
         // Check holder == null if null return failure

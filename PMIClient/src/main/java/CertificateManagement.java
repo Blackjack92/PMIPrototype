@@ -264,6 +264,29 @@ class CertificateManagement {
             HttpPost post = new HttpPost(url);
             HttpResponse response = client.execute(post);
             printResponse(response, "No attribute certificate issued.");
+
+           /* BufferedReader bfr = new BufferedReader(new InputStreamReader(response.getEntity().getContent()));
+            StringBuilder sbuilder = new StringBuilder();
+            String line;
+            while ((line = bfr.readLine()) != null) {
+                sbuilder.append(line);
+            }
+            Document doc = Jsoup.parse(sbuilder.toString());
+            Element link2 = doc.select("a").first();
+            String linkHref2 = link2.attr("href");
+
+            Pattern pattern = Pattern.compile("Attribute:(\\w+)_Serialnumber:(\\w+)_Issuer:(\\w+)_Subject:(\\w+)_Attribut-Zertifikat:(\\w+)");
+            Matcher matcher = pattern.matcher(linkHref2);
+            if (matcher.find())
+            {
+                // Whole content
+                // System.out.println(matcher.group(0));
+                System.out.println("Attribute: " + matcher.group(1));
+                System.out.println("Serialnumber: " + matcher.group(2));
+                System.out.println("Issuer: " + matcher.group(3));
+                System.out.println("Subject: " + matcher.group(4));
+                System.out.println("Attribut-Zertifikat: " + matcher.group(5));
+            }*/
         } catch (IOException e) {
             e.printStackTrace();
         }

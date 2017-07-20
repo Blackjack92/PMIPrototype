@@ -39,6 +39,7 @@ import java.util.stream.Collectors;
 public class PMIManagement {
    // private final Client client;
    Database database = new Database();
+    X509AttributeCertificateHolder att;
    //int serial = database.GetNextFreeSerialNumber();
 
     private HashMap<BigInteger, List<String>> allowedAttributes = new HashMap<>();
@@ -100,19 +101,12 @@ public class PMIManagement {
         GeneralName attributes = new GeneralName(GeneralName.uniformResourceIdentifier, "Room1");
         acBuilder.addAttribute(X509AttributeIdentifiers.id_at_role, new RoleSyntax(attributes));
         //Erzeuge Attribut Zertifikat
-        X509AttributeCertificateHolder att = acBuilder.build(new JcaContentSignerBuilder("SHA1WithRSA").setProvider("BC").build(caprivkey));
+        att = acBuilder.build(new JcaContentSignerBuilder("SHA1WithRSA").setProvider("BC").build(caprivkey));
         BigInteger acSerial = att.getSerialNumber();
         BigInteger pkcSerial = att.getHolder().getSerialNumber();
         String ac = Base64.getUrlEncoder().encodeToString(att.getEncoded());
         //database.inserting2(acSerial,pkcSerial,ac);
         database.inserting(acSerial,pkcSerial,ac);
-
-       // System.out.println();
-//X509AttributeCertificateHolder att = acBuilder
-        // On success: -->
-        // 1) Create ACHolder
-        // 2) Store ACHolder in DB
-        // 3) return holder
         return att;
     }
     public static String getFileContent(FileInputStream fis) throws IOException
