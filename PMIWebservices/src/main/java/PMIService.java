@@ -1,16 +1,21 @@
 import com.serialization.AttributeCertificateRequest;
 import com.serialization.ObjectDeserializer;
+import com.serialization.ObjectSerializer;
 import org.bouncycastle.asn1.x509.AttributeCertificate;
 import org.bouncycastle.cert.X509AttributeCertificateHolder;
 import org.bouncycastle.operator.OperatorCreationException;
 import org.jscep.client.ClientException;
 import com.mysql.jdbc.Driver;
+
+import javax.naming.NamingException;
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import java.awt.*;
 import java.io.IOException;
+import java.io.Serializable;
+import java.math.BigInteger;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
@@ -22,7 +27,7 @@ import java.util.Base64;
 public class PMIService {
 
     private final PMIManagement pmi;
-
+    Database database = new Database();
     public PMIService() throws SQLException, ClassNotFoundException {
         pmi = new PMIManagement();
     }
@@ -41,11 +46,11 @@ public class PMIService {
     public void createRequest(@PathParam("request") String request, @Context HttpServletResponse servletResponse) throws Exception {
         String redirectUrl = "../../status/";
         AttributeCertificateRequest parsedRequest = ObjectDeserializer.fromString(request);
-        for (String attribute : parsedRequest.getAttributes()) {
-            redirectUrl += "\nAttribute: " + attribute;
-        }
+        //for (String attribute : parsedRequest.getAttributes()) {
+        //    redirectUrl += "\nAttribute: " + attribute;
+        //}
         X509Certificate clientcert = parsedRequest.getCertificate();
-        redirectUrl += "\nSerialnumber: " + clientcert.getSerialNumber().toString() + "\nIssuer: " + clientcert.getIssuerX500Principal().toString() + "\nSubject: " + clientcert.getSubjectDN().toString();
+        //redirectUrl += "\nSerialnumber: " + clientcert.getSerialNumber().toString() + "\nIssuer: " + clientcert.getIssuerX500Principal().toString() + "\nSubject: " + clientcert.getSubjectDN().toString();
 
         X509AttributeCertificateHolder holder = pmi.createAttributeCertificate(parsedRequest);
 
@@ -57,34 +62,29 @@ public class PMIService {
         byte [] holder_encoded = holder.getEncoded();
         //String ac = Base64.getUrlEncoder().encodeToString(att.getEncoded());
 
-        String encoded = Base64.getUrlEncoder().encodeToString(holder_encoded);
+        String encoded = ObjectSerializer.toString(holder_encoded);//Base64.getUrlEncoder().encodeToString(holder_encoded);
 
         //String newString = new String(encoded);
 
+        redirectUrl += "AttributeCertificate:" + encoded;
 
-        redirectUrl += "\nAttribut-Zertifikat: " + encoded;
 
-        // 3) send redirect url with holder.encode();
-        // Check holder == null if null return failure
-        // else
-        // redirectUrl += holder.getEncoded();
         servletResponse.sendRedirect(redirectUrl);
 
     }
 
-    /**
-     * Difference to poll is that poll is used with the transaction id, not with serial number
-     * @param serialNumber
-     * @return
-     */
     //getac
+
     @GET
     @Path("get/{serialNumber}")
     @Produces(MediaType.TEXT_PLAIN)
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
-    public String get(@PathParam("serialNumber") String serialNumber) {
-        // TODO: implement get
-        return "Not supported at the moment.";
+    public String get(@PathParam("serialNumber") String serialNumber) throws IOException, NamingException {
+
+        BigInteger serialNumber_ = new BigInteger(serialNumber);
+        String redirectUrl = database.getSerialNumber(serialNumber_);
+
+        return redirectUrl;
     }
 
     @GET
@@ -99,8 +99,10 @@ public class PMIService {
     @DELETE
     @Path("revoke/{serialNumber}")
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
-    public void revoke(@PathParam("serialNumber") String serialNumber) {
-        // TODO: email to administrator
+    public String revoke(@PathParam("serialNumber") String serialNumber) throws IOException, NamingException {
+        BigInteger serialNumber_ = new BigInteger(serialNumber);
+        String result = database.deleteCertificate(serialNumber_);
+        return result;
     }
 
     @GET

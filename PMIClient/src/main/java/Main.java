@@ -39,11 +39,6 @@ public class Main {
                 } else if (cmd.hasOption("h")) {
                     formatter.printHelp("PMIClient", options);
                 } else if (cmd.hasOption("p")) {
-                    //System.out.print("Enter transaction id:");
-                    //String transactionId = scanner.nextLine();
-                    //System.out.println("Enter subject:");
-                    //String subject = scanner.nextLine();
-                    //cm.pollCertificate(subject, transactionId);
                     System.out.print("Enter request string:");
                     String requestString = scanner.nextLine();
                     cm.pollCertificate(requestString);
@@ -67,7 +62,16 @@ public class Main {
                     System.out.println("Enter requested attribute:");
                     String attribute = scanner.nextLine();
                     cm.createAttributeCertificateRequest(certificateFilename, attribute);
+                }else if (cmd.hasOption("ga")){
+                    System.out.println("Enter the serial number from the AC:");
+                    String serialnumber = scanner.nextLine();
+                    cm.getAttributeCertificate(serialnumber);
+                }else if (cmd.hasOption("rv")){
+                    System.out.println("Enter the serial number from the AC:");
+                    String serialnumber = scanner.nextLine();
+                    cm.revokeAttributCertificate(serialnumber);
                 }
+
             } catch (Exception e) {
                 e.printStackTrace();
                 formatter.printHelp("PMIClient", options);

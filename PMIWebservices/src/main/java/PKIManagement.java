@@ -17,7 +17,6 @@ import org.jscep.transaction.TransactionId;
 import org.jscep.transport.response.Capabilities;
 import validation.CertificateValidationException;
 import validation.CertificateValidator;
-
 import javax.print.attribute.SetOfIntegerSyntax;
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.x500.X500Principal;

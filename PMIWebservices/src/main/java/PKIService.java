@@ -78,6 +78,8 @@ public class PKIService {
         BigInteger parsedSerialNumber = new BigInteger(serialNumber, 16);
         X509Certificate certificate = pki.getCertificate(parsedSerialNumber);
         return certificate == null ? "No certificate found" : ObjectSerializer.toString(certificate);
+
+        //Methodenaufruf getSerialNumber aus Datenbank Object, übergabe der SerialNumber vom Client Wert
     }
 
     @GET

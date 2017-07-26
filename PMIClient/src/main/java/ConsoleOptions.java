@@ -38,6 +38,11 @@ public class ConsoleOptions {
 
         Option createACRequest = new Option("a", "requestac", false, "Creates a attribute certificate request.");
         options.addOption(createACRequest);
+        Option getAC = new Option("ga", "get", false, "Tries to get an Attribute Certificate by serial number.");
+        options.addOption(getAC);
+        Option revokeAC = new Option("rv", "revoke", false, "Tries to revoke an Attribute Certificate by serial number.");
+        options.addOption(revokeAC);
+
     }
 
     public Options getOptions() {
