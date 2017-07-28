@@ -6,21 +6,21 @@ import java.security.cert.X509Certificate;
 /**
  * Created by rz on 20.06.17.
  */
-public class AttributeCertificateRequest implements Serializable {
+public class ValidatePkcAc implements Serializable {
 
     private final X509Certificate certificate;
-    private final String[] attributes;
+    private final String acertificate;
 
-    public AttributeCertificateRequest(X509Certificate certificate, String[] attributes) {
+    public ValidatePkcAc(X509Certificate certificate, String acertificate) {
         this.certificate = certificate;
-        this.attributes = attributes;
+        this.acertificate = acertificate;
     }
 
     public X509Certificate getCertificate() {
         return this.certificate;
     }
 
-    public String[] getAttributes() {
-        return this.attributes;
+    public String getAcertificate() {
+        return this.acertificate;
     }
 }

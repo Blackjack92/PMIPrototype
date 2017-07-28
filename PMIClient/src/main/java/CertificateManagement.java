@@ -1,7 +1,4 @@
-import com.serialization.AttributeCertificateRequest;
-import com.serialization.KeyPairReader;
-import com.serialization.ObjectDeserializer;
-import com.serialization.ObjectSerializer;
+import com.serialization.*;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpDelete;
@@ -372,6 +369,7 @@ class CertificateManagement {
             }
 
             String ac = new String(builder);
+
             // Convert to AC object
             byte[] data = Base64.getUrlDecoder().decode(ac);
             certificateHolder = new X509AttributeCertificateHolder(data);
@@ -395,7 +393,36 @@ class CertificateManagement {
             while ((line = rd.readLine()) != null) {
                 builder.append(line);
             }
+            System.out.println(builder.toString());
         }catch (IOException e){
+            e.printStackTrace();
+        }
+    }
+    public void requestPkcAc(String certificateFilename, String base64ac){
+        X509Certificate certificate = readCertificate(certificateFilename);
+        if (certificate == null) {
+            System.out.println("No Certificate found.");
+        } else {
+        }
+        ValidatePkcAc validatePkcAc = new ValidatePkcAc(certificate, base64ac);
+
+        HttpClient client = new DefaultHttpClient();
+        try {
+            String serializedRequest = ObjectSerializer.toString(validatePkcAc);
+            String url = "http://localhost:8080/PMITest_war_exploded/pmi/validate/" + serializedRequest;
+            System.out.println("Url: " + url);
+            HttpGet get = new HttpGet(url);
+            HttpResponse response = client.execute(get);
+
+            BufferedReader rd = new BufferedReader(new InputStreamReader(response.getEntity().getContent()));
+            StringBuilder builder = new StringBuilder();
+            String line;
+            while ((line = rd.readLine()) != null) {
+                builder.append(line);
+            }
+            String output = new String(builder);
+            System.out.println(output);
+        } catch (IOException e) {
             e.printStackTrace();
         }
     }

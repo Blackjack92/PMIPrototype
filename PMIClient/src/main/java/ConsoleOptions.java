@@ -42,6 +42,8 @@ public class ConsoleOptions {
         options.addOption(getAC);
         Option revokeAC = new Option("rv", "revoke", false, "Tries to revoke an Attribute Certificate by serial number.");
         options.addOption(revokeAC);
+        Option validatepkcac = new Option("va", "validatepkcac", false, "Validates the AC and PKC");
+        options.addOption(validatepkcac);
 
     }
 

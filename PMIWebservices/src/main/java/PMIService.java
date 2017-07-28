@@ -1,6 +1,7 @@
 import com.serialization.AttributeCertificateRequest;
 import com.serialization.ObjectDeserializer;
 import com.serialization.ObjectSerializer;
+import com.serialization.ValidatePkcAc;
 import org.bouncycastle.asn1.x509.AttributeCertificate;
 import org.bouncycastle.cert.X509AttributeCertificateHolder;
 import org.bouncycastle.operator.OperatorCreationException;
@@ -16,6 +17,7 @@ import java.awt.*;
 import java.io.IOException;
 import java.io.Serializable;
 import java.math.BigInteger;
+import java.net.MalformedURLException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
@@ -28,7 +30,8 @@ public class PMIService {
 
     private final PMIManagement pmi;
     Database database = new Database();
-    public PMIService() throws SQLException, ClassNotFoundException {
+    PKIManagement pki = new PKIManagement();
+    public PMIService() throws SQLException, ClassNotFoundException, OperatorCreationException, MalformedURLException, NoSuchAlgorithmException, CertificateException {
         pmi = new PMIManagement();
     }
 
@@ -99,20 +102,20 @@ public class PMIService {
     @DELETE
     @Path("revoke/{serialNumber}")
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
-    public String revoke(@PathParam("serialNumber") String serialNumber) throws IOException, NamingException {
+    public String revoke(@PathParam("serialNumber") String serialNumber) throws IOException, NamingException, SQLException {
         BigInteger serialNumber_ = new BigInteger(serialNumber);
-        String result = database.deleteCertificate(serialNumber_);
+        String result = database.revokeCertificate(serialNumber_);
         return result;
     }
 
     @GET
-    @Path("validate/{pkc}/{ac}")
+    @Path("validate/{validatePkcAc}")
     @Produces(MediaType.TEXT_PLAIN)
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
-    public String validate(@PathParam("pkc") String pkc, @PathParam("ac") String ac) throws IOException, ClassNotFoundException {
-        // TODO: validate the given ac
-         X509Certificate deserializedPKC = ObjectDeserializer.fromString(pkc);
-        AttributeCertificate deserializedAC = ObjectDeserializer.fromString(ac);
-        return null;
+    public String validate(@PathParam("validatePkcAc") String requestpkcac) throws Exception {
+        ValidatePkcAc parsedRequest = ObjectDeserializer.fromString(requestpkcac);
+        X509Certificate clientcert = parsedRequest.getCertificate();
+        String base64ac = parsedRequest.getAcertificate();
+         return pmi.requestPkcAc(parsedRequest);
     }
 }

@@ -86,23 +86,28 @@ public class Database {
         return null;
     }
 
-    public String deleteCertificate(BigInteger serialnumber) throws NamingException, IOException {
+    public String revokeCertificate(BigInteger serialnumber) throws NamingException, IOException, SQLException {
         X509AttributeCertificateHolder certificateHolder = null;
         Context ctx = new InitialContext();
         DataSource ds = (DataSource) ctx.lookup("jdbc/MeinDatasourceJndiName");
         Connection conn = null;
         Statement stmt = null;
         ResultSet rs = null;
+        int count;
         try {
             conn = ds.getConnection();
             stmt = conn.createStatement();
-            String sql = "DELETE FROM ACCredentials WHERE AcSerial="+ serialnumber;
-            int result = stmt.executeUpdate(sql);
-            if (result == 1 ) {
-                insertrevokeserialnumber(serialnumber);
-                return "Succesfully deleted";
-            }else {
-                return "No AttributeCertificate found";
+            String sql = "SELECT COUNT(AcSerial) AS anzahl FROM ACCredentials WHERE AcSerial="+ serialnumber;
+            rs = stmt.executeQuery(sql);
+            while (rs.next()) {
+                //Retrieve by column name
+                count = rs.getInt("anzahl");
+                if (count == 1){
+                    return insertrevokeserialnumber(serialnumber);
+                }
+                if (count == 0) {
+                    return "No SerialNumber found";
+                }
             }
         } catch (SQLException se) {
             se.printStackTrace();
@@ -117,7 +122,7 @@ public class Database {
         return null;
     }
 
-    public void insertrevokeserialnumber(BigInteger serialnumber) throws NamingException {
+    public String insertrevokeserialnumber(BigInteger serialnumber) throws NamingException {
         InitialContext ctx;
         DataSource ds;
         Connection conn = null;
@@ -128,8 +133,13 @@ public class Database {
             //ds = (DataSource) ctx.lookup("jdbc/MySQLDataSource");
             conn = ds.getConnection();
             stmt = conn.createStatement();
-            String sql = "INSERT INTO ACRevoked " + "VALUES (" + serialnumber + "," + null +")";
+            String sql = "INSERT IGNORE INTO ACRevoked " + "VALUES (" + serialnumber + "," + null +")";
             int result = stmt.executeUpdate(sql);
+            if (result == 1 ) {
+                return "AC revoked";
+            }else {
+                return "AC couldn't be revoked";
+            }
         } catch (SQLException se) {
             se.printStackTrace();
         } finally {
@@ -140,6 +150,115 @@ public class Database {
                 se.printStackTrace();
             }
         }
+        return null;
+    }
+    public String selectacserial(BigInteger serialnumber) throws NamingException, IOException {
+        //X509AttributeCertificateHolder certificateHolder = null;
+        Context ctx = new InitialContext();
+        DataSource ds = (DataSource) ctx.lookup("jdbc/MeinDatasourceJndiName");
+        Connection conn = null;
+        Statement stmt = null;
+        ResultSet rs = null;
+        try {
+            conn = ds.getConnection();
+            stmt = conn.createStatement();
+            String sql = "SELECT AcSerial FROM ACCredentials WHERE AcSerial="+ serialnumber;
+            rs = stmt.executeQuery(sql);
+
+            while (rs.next()) {
+                //Retrieve by column name
+                String acserial = rs.getString("AcSerial");
+                BigInteger acserialinteger = new BigInteger(acserial);
+                if (acserialinteger.equals(serialnumber)){
+                }else {
+                    return "ACSerialnumber not found";
+                }
+            }
+            rs.close();
+        } catch (SQLException se) {
+            se.printStackTrace();
+        } finally {
+            try {
+                if (conn != null)
+                    conn.close();
+            } catch (SQLException se) {
+                se.printStackTrace();
+            }
+        }
+        return "ACSerialnumber: valid";
+    }
+
+    public String verifybase64ac(String base64ac) throws NamingException, IOException {
+        X509AttributeCertificateHolder certificateHolder = null;
+        Context ctx = new InitialContext();
+        DataSource ds = (DataSource) ctx.lookup("jdbc/MeinDatasourceJndiName");
+        Connection conn = null;
+        Statement stmt = null;
+        ResultSet rs = null;
+        try {
+            conn = ds.getConnection();
+            stmt = conn.createStatement();
+            String sql = "SELECT Certificate FROM ACCredentials WHERE Certificate =" + "'" + base64ac + "'";
+            rs = stmt.executeQuery(sql);
+
+            while (rs.next()) {
+                //Retrieve by column name
+                String AC = rs.getString("Certificate");
+                if (base64ac.equals(AC)) {
+                    return "Base64 AC matches";
+                } else {
+                    return "Base64 AC corrupted";
+                }
+            }
+            rs.close();
+        } catch (SQLException se) {
+            se.printStackTrace();
+        } finally {
+            try {
+                if (conn != null)
+                    conn.close();
+            } catch (SQLException se) {
+                se.printStackTrace();
+            }
+        }
+        return "";
+    }
+
+    public String verifyrevokedacserial(BigInteger serialnumber) throws NamingException, IOException {
+        X509AttributeCertificateHolder certificateHolder = null;
+        Context ctx = new InitialContext();
+        DataSource ds = (DataSource) ctx.lookup("jdbc/MeinDatasourceJndiName");
+        Connection conn = null;
+        Statement stmt = null;
+        ResultSet rs = null;
+        int count;
+        try {
+            conn = ds.getConnection();
+            stmt = conn.createStatement();
+            String sql = "SELECT COUNT(AcSerial) AS anzahl FROM ACCredentials WHERE AcSerial="+ serialnumber;
+            rs = stmt.executeQuery(sql);
+            while (rs.next()) {
+                //Retrieve by column name
+                count = rs.getInt("anzahl");
+                if (count == 1){
+                    return "AC is revoked";
+                }
+                if (count == 0) {
+                    return "AC is not revoked";
+                }
+            }
+            rs.close();
+        } catch (SQLException se) {
+            se.printStackTrace();
+        } finally {
+            try {
+                if (conn != null)
+                    conn.close();
+            } catch (SQLException se) {
+                se.printStackTrace();
+            }
+        }
+        return "";
     }
     public static int GetNextFreeSerialNumber() throws ClassNotFoundException, SQLException {
         Connection conn = null;
@@ -177,7 +296,6 @@ public class Database {
                 se.printStackTrace();
             }
         }
-
         return -1;
     }
 

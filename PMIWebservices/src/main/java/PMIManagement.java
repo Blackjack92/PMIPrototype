@@ -1,5 +1,6 @@
 import com.serialization.AttributeCertificateRequest;
 import com.serialization.KeyPairReader;
+import com.serialization.ValidatePkcAc;
 import org.bouncycastle.asn1.x509.X509AttributeIdentifiers;
 import org.bouncycastle.cert.AttributeCertificateHolder;
 import org.bouncycastle.cert.X509AttributeCertificateHolder;
@@ -35,14 +36,19 @@ import java.security.cert.*;
 import java.sql.SQLException;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.Date;
 
 public class PMIManagement {
-   // private final Client client;
-   Database database = new Database();
+    // private final Client client;
+    Database database = new Database();
+    Date date = new Date();
+    PKIManagement pki = new PKIManagement();
     X509AttributeCertificateHolder att;
-   int serial = database.GetNextFreeSerialNumber();
+    int serial = database.GetNextFreeSerialNumber();
     private HashMap<BigInteger, List<String>> allowedAttributes = new HashMap<>();
-    public PMIManagement() throws SQLException, ClassNotFoundException {
+    public boolean isDateValid =false;
+
+    public PMIManagement() throws SQLException, ClassNotFoundException, OperatorCreationException, MalformedURLException, NoSuchAlgorithmException, CertificateException {
         // 373990605818127595288063
         List<String> attributes = new ArrayList<>();
         attributes.add("Room1");
@@ -50,14 +56,18 @@ public class PMIManagement {
         attributes.add("Room3");
         allowedAttributes.put(new BigInteger("373990605818127595288063"), attributes);
     }
+
     public X509AttributeCertificateHolder createAttributeCertificate(AttributeCertificateRequest parsedRequest) throws Exception {
-        if (parsedRequest == null || parsedRequest.getCertificate() == null) { return null; }
+        if (parsedRequest == null || parsedRequest.getCertificate() == null) {
+            return null;
+        }
         // 1) Validate Certificate
-        PKIManagement pki = new PKIManagement();
-        String validationResult = pki.validateCertificate( parsedRequest.getCertificate());
+        String validationResult = pki.validateCertificate(parsedRequest.getCertificate());
         //if (validationResult );
-        if (validationResult.equals("Validation was successful.\n")){
-        }else {return null;}
+        if (validationResult.equals("Validation was successful.\n")) {
+        } else {
+            return null;
+        }
         // 2) Validate attributes
         BigInteger serialNumber = parsedRequest.getCertificate().getSerialNumber();
         boolean requestedAttributesAllowed = true;
@@ -68,9 +78,10 @@ public class PMIManagement {
                 requestedAttributesAllowed &= attributes.stream().anyMatch(attr -> attr.equals(s));
             }
         }
-        if (!requestedAttributesAllowed) { return null; }
+        if (!requestedAttributesAllowed) {
+            return null;
+        }
         parsedRequest.getCertificate().getPublicKey();
-
         //read cacertificate
         FileInputStream in = new FileInputStream("/home/rz/Dokumente/PMIPrototype/PMIAAkeys/cert.pem");
         CertificateFactory factory = CertificateFactory.getInstance("X.509");
@@ -97,19 +108,17 @@ public class PMIManagement {
         BigInteger pkcSerial = att.getHolder().getSerialNumber();
         String ac = Base64.getUrlEncoder().encodeToString(att.getEncoded());
         //database.inserting2(acSerial,pkcSerial,ac);
-        database.inserting(acSerial,pkcSerial,ac);
+        database.inserting(acSerial, pkcSerial, ac);
         return att;
     }
-    public static String getFileContent(FileInputStream fis) throws IOException
-    {
-        try( BufferedReader br =
-                     new BufferedReader( new InputStreamReader(fis, "UTF-8" )))
-        {
+    public static String getFileContent(FileInputStream fis) throws IOException {
+        try (BufferedReader br =
+                     new BufferedReader(new InputStreamReader(fis, "UTF-8"))) {
             StringBuilder sb = new StringBuilder();
             String line;
-            while(( line = br.readLine()) != null ) {
-                sb.append( line );
-                sb.append( '\n' );
+            while ((line = br.readLine()) != null) {
+                sb.append(line);
+                sb.append('\n');
             }
             return sb.toString();
         }
@@ -124,5 +133,47 @@ public class PMIManagement {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+    public String requestPkcAc(ValidatePkcAc parsedRequest) throws Exception {
+        if (parsedRequest == null || parsedRequest.getCertificate() == null) {
+            return null;
+        }
+        if (parsedRequest == null || parsedRequest.getAcertificate() == null) {
+            return null;
+        }
+        // 1) Validate Certificate
+        String validationResult = pki.validateCertificate(parsedRequest.getCertificate());
+        if (validationResult.equals("Validation was successful.\n")) {
+        } else {
+            return "PKC: invalid";
+        }
+        //Requested AC
+        String requestedAc = parsedRequest.getAcertificate();
+        byte[] data = Base64.getUrlDecoder().decode(requestedAc);
+        X509AttributeCertificateHolder acholder = new X509AttributeCertificateHolder(data);
+        BigInteger acserial = acholder.getSerialNumber();
+        String result = database.selectacserial(acserial);
+        String result2 = database.verifybase64ac(requestedAc);
+        String result3= database.verifyrevokedacserial(acholder.getSerialNumber());
+
+        //Verify Date (works)
+        long notbefore = acholder.getNotBefore().getTime();
+        long notafter = acholder.getNotAfter().getTime();
+        if (date.getTime() > notbefore && date.getTime() < notafter) {
+            isDateValid = true;
+        }else {
+            isDateValid = false;
+        }
+String datevalid = "ACDate valid: " + String.valueOf(isDateValid);
+        StringBuffer stringBuffer = new StringBuffer();
+        stringBuffer.append("PKC: valid");
+        stringBuffer.append("||"+datevalid);
+        stringBuffer.append("||"+result);
+        stringBuffer.append("||"+result2);
+        stringBuffer.append("||"+result3);
+
+        String string  = stringBuffer.toString();
+
+        return  string;
     }
 }

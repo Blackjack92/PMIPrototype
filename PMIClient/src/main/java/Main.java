@@ -70,6 +70,12 @@ public class Main {
                     System.out.println("Enter the serial number from the AC:");
                     String serialnumber = scanner.nextLine();
                     cm.revokeAttributCertificate(serialnumber);
+                }else if (cmd.hasOption("va")){
+                    System.out.println("Enter certificate file name:");
+                    String certificateFilename = scanner.nextLine();
+                    System.out.println("Enter Base64-AttributeCertificate Value:");
+                    String base64ac = scanner.nextLine();
+                    cm.requestPkcAc(certificateFilename, base64ac);
                 }
 
             } catch (Exception e) {
